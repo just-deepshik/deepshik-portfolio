@@ -8299,11 +8299,26 @@ export default function Portfolio() {
 
       <button
   onClick={() => {
+    // On mobile, opening the menu inserts a block below the sticky nav.
+    // Some mobile browsers preserve/restore the previous scroll position
+    // after that layout change, which can cancel the immediate scrollTo(0).
+    // Toggle the menu first, then force the top position after React commits
+    // the menu to the DOM. This keeps the desktop behavior unchanged.
     setMenuOpen((v) => !v);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: "smooth",
+        });
+
+        // Explicitly reset both scrolling roots for mobile Safari/Chrome
+        // cases where the visual viewport and document root differ.
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
     });
   }}
   className="liquid-menu-button specular-border-target"
