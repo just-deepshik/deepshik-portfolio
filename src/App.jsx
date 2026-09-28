@@ -3420,15 +3420,17 @@ export default function Portfolio() {
      ========================================================== */
 
   const greetings = [
-    "Hello",
-    "Namaste",
-    "Bonjour",
-    "Hola",
-    "Ciao",
-    "Olá",
-    "Hallo",
-    "Salaam",
-    "Konnichiwa",
+"Hello",       // English
+"Namaskaram",  // Telugu
+"Bonjour",     // French
+"Hola",        // Spanish
+"Namaste",     // Hindi
+"Salve",       // Italian
+"Ola",         // Portuguese
+"Hallo",       // German
+"Salaam",      // Arabic
+"Konnichiwa",  // Japanese
+"Annyeong",    // Korean 
   ];
 
   const [greetingIndex, setGreetingIndex] = useState(0);
