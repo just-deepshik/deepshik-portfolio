@@ -7404,7 +7404,61 @@ export default function Portfolio() {
         }
 
         @media (max-width: 640px) {
+          /* =====================================================
+             POLAROID CAMERA — MOBILE ONLY
+             Keep desktop completely unchanged.
+             ===================================================== */
+          #polaroid-camera {
+            /* A phone-friendly 9:16 section, but never shorter than
+               the visible mobile viewport. */
+            min-height: max(177.7778vw, 100svh);
+            height: max(177.7778vw, 100svh);
+            box-sizing: border-box;
+            padding: 30px 16px 34px !important;
+            margin: 0 !important;
+            scroll-margin-top: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          #polaroid-camera > div {
+            width: 100%;
+            max-width: 720px;
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-sizing: border-box;
+          }
+
+          #polaroid-camera h2 {
+            flex: 0 0 auto;
+            margin-top: 0 !important;
+            margin-bottom: 8px !important;
+          }
+
+          #polaroid-camera p {
+            flex: 0 0 auto;
+            margin-bottom: 18px !important;
+            max-width: min(330px, 88vw) !important;
+          }
+
+          #polaroid-camera .polaroid-camera-wrap {
+            width: min(100%, 350px);
+            max-width: 350px;
+            flex: 0 0 auto;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
           .reference-polaroid-camera {
+            width: 100%;
             border-radius: 22px;
           }
 
@@ -7425,11 +7479,142 @@ export default function Portfolio() {
           }
 
           .polaroid-access-card {
-            padding: 38px 20px 24px;
+            width: min(100%, 350px);
+            max-height: min(68svh, 430px);
+            overflow-y: auto;
+            padding: 30px 18px 22px;
+            box-sizing: border-box;
+            margin: 0 auto;
+          }
+
+          .polaroid-live-card {
+            width: min(100%, 350px);
+            max-height: min(72svh, 470px);
+            margin: 0 auto;
+          }
+
+          .polaroid-result-wrap {
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto;
           }
 
           .captured-polaroid {
             width: min(300px, 82vw);
+            max-width: 100%;
+          }
+        }
+
+        /* ============================================================
+           MOBILE FULL-SCREEN SECTION FIT — STL + SOCIALS
+           ============================================================ */
+
+        @media (max-width: 640px) {
+          /*
+           * Keep these sections visually self-contained on phones.
+           * Desktop sizing is not changed.
+           */
+          .stl-model-section {
+            min-height: max(100svh, calc(100vw * 16 / 9));
+            height: auto;
+            box-sizing: border-box;
+            padding: 44px 16px 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .stl-model-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+          }
+
+          .stl-model-heading {
+            margin: 0 auto 20px;
+            max-width: 100%;
+          }
+
+          .stl-model-heading h2 {
+            font-size: clamp(24px, 7vw, 30px);
+          }
+
+          .stl-model-heading p {
+            max-width: 92%;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 11px;
+            line-height: 1.55;
+          }
+
+          /*
+           * The existing 390px mobile viewer is replaced with a
+           * responsive viewer that fits the 9:16 section cleanly.
+           */
+          .stl-viewer-shell {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+          }
+
+          .stl-viewer {
+            width: 100%;
+            height: min(52vw, 360px);
+            min-height: 270px;
+            max-height: 360px;
+            border-radius: 20px;
+          }
+
+          .stl-viewer-hint {
+            left: 10px;
+            bottom: 10px;
+            max-width: calc(100% - 20px);
+            font-size: 9px;
+            padding: 6px 8px;
+          }
+
+          .stl-viewer-controls {
+            transform: scale(0.88);
+            transform-origin: bottom right;
+          }
+
+          /*
+           * SOCIALS / FOOTER
+           * Full mobile viewport with centered content and
+           * enough top/bottom space to hide neighboring sections.
+           */
+          .socials-footer-lightfall {
+            min-height: max(100svh, calc(100vw * 16 / 9));
+            height: auto;
+            box-sizing: border-box;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .socials-footer-content {
+            width: 100%;
+            max-width: 100%;
+            min-height: max(100svh, calc(100vw * 16 / 9));
+            padding: 54px 18px 54px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+
+          .socials-lightfall-grid {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto 18px;
+            gap: 9px;
+          }
+
+          .social-glass-pill {
+            min-height: 48px;
+            padding: 10px 12px;
+            font-size: 12px;
           }
         }
 
@@ -7645,7 +7830,64 @@ export default function Portfolio() {
         @keyframes folder-float-drift { 0%,100% { translate: 0 0; } 50% { translate: 0 -3px; } }
         @keyframes folder-float-pop { 30% { scale: 1.1; } 100% { scale: 1; } }
         @media (prefers-reduced-motion: reduce) { .folder-float__front, .folder-float__paper { transition: opacity 200ms ease; } .folder-float[data-open] .folder-float__front { transform: perspective(600px) rotateX(calc(-1 * var(--ff-rest))); } .folder-float__paper { transform: none !important; } .folder-float__item { transition: opacity 200ms ease; } .folder-float[data-open] .folder-float__item { transition: opacity 200ms ease calc(var(--i) * var(--ff-stagger)); } .folder-float__drift { animation: none; } }
-        @media (max-width: 640px) { .folder-float { --ff-w: 180px; --ff-h: 136px; } }
+        @media (max-width: 640px) {
+          /* CERTIFICATIONS / FOLDER FLOAT — MOBILE ONLY */
+          .certifications-glass-section {
+            overflow: visible !important;
+          }
+
+          .certifications-glass-section .certifications-folder-stage {
+            width: 100%;
+            min-height: 390px;
+            position: relative;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 0 0 18px !important;
+            box-sizing: border-box;
+            overflow: visible !important;
+          }
+
+          .certifications-glass-section .folder-float {
+            --ff-w: min(180px, 48vw);
+            --ff-h: min(136px, 36vw);
+            --ff-spread: min(108px, 29vw);
+            --ff-lift: 8px;
+            --ff-tab: 12px;
+            width: var(--ff-w);
+            flex: 0 0 auto;
+            margin: 0 auto;
+          }
+
+          .certifications-glass-section .folder-float__folder {
+            width: var(--ff-w);
+            height: var(--ff-h);
+          }
+
+          .certifications-glass-section .folder-float__item {
+            width: min(86vw, 270px);
+            max-width: min(86vw, 270px);
+            min-height: 30px;
+            height: auto;
+            padding: 6px 9px;
+            border-radius: 12px;
+            font-size: 9.5px;
+            line-height: 1.22;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            text-align: center;
+            box-sizing: border-box;
+          }
+
+          .certifications-glass-section .folder-float__drift {
+            display: block;
+            width: 100%;
+          }
+
+          .certifications-glass-section .folder-float__items {
+            top: var(--ff-tab);
+          }
+        }
 
         /* ============================
            SPECULAR GET-IN-TOUCH BUTTON
@@ -9598,12 +9840,13 @@ export default function Portfolio() {
           </h2>
 
           <div
+            className="certifications-folder-stage"
             style={{
-              minHeight: isMobile ? 350 : 270,
+              minHeight: isMobile ? 390 : 270,
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: isMobile ? "flex-end" : "flex-start",
               justifyContent: "center",
-              padding: isMobile ? "170px 0 0" : "160px 0 0",
+              padding: isMobile ? "0 0 18px" : "160px 0 0",
               boxSizing: "border-box",
               overflow: "visible",
             }}
@@ -9632,8 +9875,8 @@ export default function Portfolio() {
               width={200}
               height={148}
               radius={14}
-              spread={isMobile ? 155 : 220}
-              lift={30}
+spread={isMobile ? 130 : 220}
+lift={isMobile ? 12 : 30}
               tilt={8}
               flapAngle={34}
               restAngle={16}
@@ -9919,6 +10162,7 @@ export default function Portfolio() {
       {CONTENT.showPhotography && (
         <section
           id="polaroid-camera"
+          className="polaroid-camera-section"
           style={{
             background: "#141210",
             padding: isMobile
