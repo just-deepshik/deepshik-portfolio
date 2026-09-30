@@ -7547,7 +7547,7 @@ export default function Portfolio() {
 .dna-section {
           position: relative;
           overflow: hidden;
-          min-height: 120vh;
+          min-height: 100vh;
           padding: 120px 24px 110px;
           background:
             radial-gradient(circle at 18% 25%, rgba(56,189,248,0.10), transparent 28%),
@@ -8072,7 +8072,11 @@ export default function Portfolio() {
             font-size: 8px;
           }
 
-          .dna-statement { margin-top: 28px; font-size: 8px; }
+          .dna-statement {
+            margin-top: 28px;
+            margin-bottom: 180px;
+            font-size: 8px;
+          }
 
           .dna-3d-topbar { padding: 12px; }
           .dna-3d-stage { height: 360px; }
