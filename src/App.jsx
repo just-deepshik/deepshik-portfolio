@@ -9292,7 +9292,7 @@ export default function Portfolio() {
           textAlign: "center",
           minHeight:
             isMobile
-              ? 500
+              ? 720
               : 520,
           display: "flex",
           alignItems: "center",
