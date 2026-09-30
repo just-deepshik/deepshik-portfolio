@@ -4044,6 +4044,14 @@ export default function Portfolio() {
   const [aboutTab, setAboutTab] = useState("story");
   const [activeNav, setActiveNav] = useState("#about");
   const [videoMuted, setVideoMuted] = useState(true);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [contactStatus, setContactStatus] = useState("");
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    purpose: "",
+  });
   const [selectedPolaroid, setSelectedPolaroid] = useState(null);
   const polaroidZoomRef = useRef(null);
   const polaroidCloseRef = useRef(null);
@@ -4053,6 +4061,104 @@ export default function Portfolio() {
 
   const videoRef = useRef(null);
   const nameWaveRef = useRef(null);
+  const openContactModal = useCallback(() => {
+    setContactStatus("");
+    setContactOpen(true);
+  }, []);
+
+  const closeContactModal = useCallback(() => {
+    if (contactSubmitting) return;
+    setContactOpen(false);
+    setContactStatus("");
+  }, [contactSubmitting]);
+
+  const handleContactChange = (event) => {
+    const { name, value } = event.target;
+    setContactForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleContactSubmit = async (event) => {
+    event.preventDefault();
+
+    if (contactSubmitting) return;
+
+    setContactSubmitting(true);
+    setContactStatus("");
+
+    try {
+      const response = await fetch(
+        "https://formsubmit.co/ajax/deepshikkodam@gmail.com",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name: contactForm.name,
+            email: contactForm.email,
+            purpose: contactForm.purpose,
+            _subject: `New portfolio enquiry from ${contactForm.name}`,
+            _template: "table",
+            _captcha: true,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Unable to send the message.");
+      }
+
+      setContactStatus(
+        "Message sent successfully. Thanks for reaching out!"
+      );
+
+      setContactForm({
+        name: "",
+        email: "",
+        purpose: "",
+      });
+
+      window.setTimeout(() => {
+        setContactOpen(false);
+        setContactStatus("");
+      }, 1800);
+    } catch (error) {
+      console.error("Contact form submission failed:", error);
+      setContactStatus(
+        "Something went wrong. Please try again or email me directly."
+      );
+    } finally {
+      setContactSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!contactOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !contactSubmitting) {
+        setContactOpen(false);
+        setContactStatus("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [contactOpen, contactSubmitting]);
+
 
   /* ==========================================================
      POLAROID QUICK-LOOK / MAC-STYLE ZOOM
@@ -6524,7 +6630,7 @@ export default function Portfolio() {
             background 0.22s ease,
             box-shadow 0.22s ease,
             border-color 0.22s ease;
-        }
+        }\n\n        button.social-glass-pill {\n          border: none;\n          font-family: inherit;\n          cursor: pointer;\n        }
 
         .social-glass-pill::before {
           content: "";
@@ -10253,7 +10359,910 @@ export default function Portfolio() {
             padding: 9px 16px !important;
           }
         }
-      `}</style>
+
+
+        /* ============================================================
+           CONTACT MODAL — CRYSTAL LIQUID GLASS
+           ============================================================ */
+
+        .contact-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          box-sizing: border-box;
+          background:
+            radial-gradient(circle at 18% 20%, rgba(255,255,255,0.10), transparent 28%),
+            radial-gradient(circle at 82% 76%, rgba(125,211,252,0.08), transparent 32%),
+            rgba(5,16,28,0.08);
+          backdrop-filter: blur(10px) saturate(120%);
+          -webkit-backdrop-filter: blur(10px) saturate(120%);
+          opacity: 0;
+          animation: contactBackdropIn 0.32s ease forwards;
+          overscroll-behavior: contain;
+        }
+
+        /* ==========================================================
+           LIQUID GLASS CONTACT MODAL
+           Inspired by the soft, neutral, refractive glass language
+           of iOS Control Center — not a flat coloured panel.
+           ========================================================== */
+        .contact-modal-card {
+          position: relative;
+          width: min(900px, 90vw, calc((100vh - 48px) * 16 / 9));
+          aspect-ratio: 16 / 9;
+          height: auto;
+          max-height: calc(100vh - 48px);
+          overflow: hidden;
+          isolation: isolate;
+          box-sizing: border-box;
+          padding: 30px;
+          display: grid;
+          grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+          grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+          column-gap: 26px;
+          row-gap: 16px;
+          border-radius: 30px;
+          border: 1px solid rgba(255,255,255,0.50);
+
+          /* Crystal Ice: smoked, neutral dark glass.
+             The colour is intentionally restrained so the environment
+             underneath remains visible and does the visual work. */
+          background:
+            radial-gradient(90% 120% at 0% 0%, rgba(255,255,255,0.14), transparent 42%),
+            radial-gradient(70% 100% at 100% 8%, rgba(125,211,252,0.10), transparent 46%),
+            radial-gradient(65% 90% at 68% 100%, rgba(148,163,184,0.08), transparent 52%),
+            rgba(13,25,38,0.24);
+          color: #F4F8FC;
+          box-shadow:
+            0 34px 100px rgba(4,15,26,0.28),
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            inset 1px 0 0 rgba(255,255,255,0.20),
+            inset -1px 0 0 rgba(255,255,255,0.08);
+          backdrop-filter: blur(34px) saturate(165%) contrast(108%);
+          -webkit-backdrop-filter: blur(34px) saturate(165%) contrast(108%);
+          transform: translateY(18px) scale(0.96);
+          opacity: 0;
+          animation: contactCardIn 0.42s cubic-bezier(0.22,1,0.36,1) 0.03s forwards;
+          overscroll-behavior: contain;
+        }
+
+        /* Refracted light inside the glass. Large, soft colour pools
+           create the characteristic Control Center glow without turning
+           the whole card into a coloured rectangle. */
+        .contact-modal-card::before {
+          content: "";
+          position: absolute;
+          inset: -32%;
+          z-index: -1;
+          pointer-events: none;
+          border-radius: 42%;
+          background:
+            radial-gradient(circle at 15% 18%, rgba(255,255,255,0.24), transparent 22%),
+            radial-gradient(circle at 72% 20%, rgba(186,230,253,0.14), transparent 25%),
+            radial-gradient(circle at 82% 78%, rgba(56,189,248,0.10), transparent 28%),
+            radial-gradient(circle at 34% 86%, rgba(255,255,255,0.08), transparent 25%);
+          filter: blur(46px) saturate(155%);
+          transform: translate3d(0,0,0) scale(1.06);
+          opacity: 0.95;
+        }
+
+        /* Thin luminous glass rim + a faint internal sheen. */
+        .contact-modal-card::after {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          z-index: -1;
+          pointer-events: none;
+          border-radius: 29px;
+          background:
+            linear-gradient(
+              128deg,
+              rgba(255,255,255,0.15) 0%,
+              rgba(255,255,255,0.035) 18%,
+              transparent 42%,
+              transparent 74%,
+              rgba(186,230,253,0.08) 92%,
+              rgba(255,255,255,0.16) 100%
+            );
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.055),
+            inset 0 14px 34px rgba(255,255,255,0.025);
+        }
+
+        /* Aquatic Mist: opposite treatment — bright translucent glass
+           over the dark environment. */
+        .portfolio-root[data-dark="true"] .contact-modal-backdrop {
+          background:
+            radial-gradient(circle at 18% 18%, rgba(103,232,249,0.06), transparent 30%),
+            radial-gradient(circle at 82% 78%, rgba(45,212,191,0.05), transparent 34%),
+            rgba(0,8,15,0.08);
+          backdrop-filter: blur(10px) saturate(120%);
+          -webkit-backdrop-filter: blur(10px) saturate(120%);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-card {
+          border-color: rgba(255,255,255,0.46);
+          background:
+            radial-gradient(90% 120% at 0% 0%, rgba(255,255,255,0.23), transparent 42%),
+            radial-gradient(70% 100% at 100% 8%, rgba(103,232,249,0.10), transparent 46%),
+            radial-gradient(65% 90% at 68% 100%, rgba(45,212,191,0.07), transparent 52%),
+            rgba(232,242,247,0.17);
+          color: #09283B;
+          box-shadow:
+            0 34px 100px rgba(0,0,0,0.32),
+            inset 0 1px 0 rgba(255,255,255,0.86),
+            inset 0 -1px 0 rgba(255,255,255,0.12),
+            inset 1px 0 0 rgba(255,255,255,0.24),
+            inset -1px 0 0 rgba(255,255,255,0.10);
+          backdrop-filter: blur(34px) saturate(165%) contrast(108%);
+          -webkit-backdrop-filter: blur(34px) saturate(165%) contrast(108%);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-header h2 {
+          color: #F4FBFF;
+          text-shadow: 0 2px 20px rgba(255,255,255,0.10);
+        }
+
+        .contact-modal-close {
+          position: absolute;
+          top: 18px;
+          right: 18px;
+          width: 38px;
+          height: 38px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255,255,255,0.54);
+          border-radius: 50%;
+          background: rgba(20,32,44,0.24);
+          color: #F8FCFF;
+          cursor: pointer;
+          backdrop-filter: blur(24px) saturate(160%);
+          -webkit-backdrop-filter: blur(24px) saturate(160%);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            0 8px 24px rgba(4,20,32,0.16);
+          transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .contact-modal-close:hover {
+          transform: rotate(4deg) scale(1.06);
+          background: rgba(20,32,44,0.34);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.90),
+            0 11px 30px rgba(4,20,32,0.22);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-close {
+          border-color: rgba(255,255,255,0.58);
+          background: rgba(255,255,255,0.22);
+          color: #092A3D;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.86),
+            0 8px 24px rgba(0,0,0,0.14);
+        }
+
+        .contact-modal-header {
+          grid-column: 1;
+          grid-row: 1;
+          padding-right: 34px;
+          margin-bottom: 0;
+          align-self: end;
+        }
+
+        .contact-modal-eyebrow {
+          display: inline-block;
+          margin-bottom: 8px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          color: #7DD3FC;
+          text-shadow: 0 1px 14px rgba(125,211,252,0.22);
+        }
+
+        .contact-modal-header h2 {
+          margin: 0 0 8px;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: clamp(32px, 6vw, 46px);
+          font-weight: 500;
+          line-height: 0.98;
+          letter-spacing: -0.045em;
+          color: #F5F9FC;
+          text-shadow: 0 2px 18px rgba(0,0,0,0.18);
+        }
+
+        .contact-modal-header p {
+          margin: 0;
+          max-width: 470px;
+          font-size: 13px;
+          line-height: 1.65;
+          color: rgba(238,247,252,0.78);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-header p {
+          color: rgba(9,40,59,0.74);
+        }
+
+        .contact-modal-direct {
+          grid-column: 1;
+          grid-row: 2;
+          display: grid;
+          grid-template-columns: 1fr;
+          align-content: start;
+          gap: 10px;
+          margin: 0;
+        }
+
+        /* Shared liquid-glass surface. */
+        .contact-direct-item,
+        .contact-modal-form input,
+        .contact-modal-form textarea,
+        .contact-submit-button {
+          position: relative;
+          overflow: hidden;
+          isolation: isolate;
+        }
+
+        .contact-direct-item::before,
+        .contact-modal-form input::before,
+        .contact-modal-form textarea::before,
+        .contact-submit-button::before {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          border-radius: inherit;
+          pointer-events: none;
+          background:
+            linear-gradient(110deg, rgba(255,255,255,0.18), transparent 24%, transparent 68%, rgba(255,255,255,0.07));
+          opacity: 0.9;
+          z-index: -1;
+        }
+
+        .contact-direct-item {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 11px 13px;
+          border: 1px solid rgba(255,255,255,0.44);
+          border-radius: 999px;
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.16), transparent 42%),
+            rgba(18,30,42,0.20);
+          color: #F1F7FB;
+          text-decoration: none;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.66),
+            inset 0 -1px 0 rgba(255,255,255,0.07),
+            0 8px 26px rgba(3,18,30,0.13);
+          backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+          -webkit-backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+          transition: transform 0.24s ease, background 0.24s ease, box-shadow 0.24s ease;
+        }
+
+        .contact-direct-item:hover {
+          transform: translateY(-2px);
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.21), transparent 42%),
+            rgba(18,30,42,0.27);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.76),
+            0 12px 32px rgba(3,18,30,0.18);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-direct-item {
+          border-color: rgba(255,255,255,0.52);
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.24), transparent 42%),
+            rgba(245,250,252,0.16);
+          color: #0A3044;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.80),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            0 8px 26px rgba(0,0,0,0.13);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-direct-item:hover {
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.30), transparent 42%),
+            rgba(245,250,252,0.22);
+        }
+
+        .contact-direct-icon {
+          width: 32px;
+          height: 32px;
+          flex: 0 0 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.48);
+          background: rgba(255,255,255,0.11);
+          color: #D9F4FF;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.72),
+            0 4px 14px rgba(56,189,248,0.10);
+          backdrop-filter: blur(18px) saturate(160%);
+          -webkit-backdrop-filter: blur(18px) saturate(160%);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-direct-icon {
+          border-color: rgba(255,255,255,0.56);
+          background: rgba(255,255,255,0.22);
+          color: #087EA1;
+        }
+
+        .contact-direct-item span:last-child {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .contact-direct-item small {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(235,247,252,0.70);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-direct-item small {
+          color: rgba(9,48,68,0.66);
+        }
+
+        .contact-direct-item strong {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .contact-modal-form {
+          grid-column: 2;
+          grid-row: 1 / span 2;
+          min-width: 0;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 9px;
+        }
+
+        .contact-modal-form label {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .contact-modal-form label > span {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          color: rgba(229,242,249,0.72);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-form label > span {
+          color: rgba(9,48,68,0.68);
+        }
+
+        .contact-modal-form input,
+        .contact-modal-form textarea {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid rgba(255,255,255,0.48);
+          border-radius: 999px;
+          outline: none;
+          padding: 11px 17px;
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.17), transparent 42%),
+            rgba(18,30,42,0.21);
+          backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+          -webkit-backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+          color: #F4F9FC;
+          font: inherit;
+          font-size: 13px;
+          line-height: 1.5;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.68),
+            inset 0 -1px 0 rgba(255,255,255,0.06),
+            0 7px 24px rgba(3,18,30,0.11);
+          transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+        }
+
+        .contact-modal-form input::placeholder,
+        .contact-modal-form textarea::placeholder {
+          color: rgba(240,248,252,0.70);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-form input,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea {
+          border-color: rgba(255,255,255,0.54);
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.25), transparent 42%),
+            rgba(245,250,252,0.17);
+          color: #092F43;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.82),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            0 7px 24px rgba(0,0,0,0.12);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-form input::placeholder,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea::placeholder {
+          color: rgba(9,47,67,0.66);
+        }
+
+        .contact-modal-form input:focus,
+        .contact-modal-form textarea:focus {
+          border-color: rgba(186,230,253,0.82);
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.22), transparent 42%),
+            rgba(18,30,42,0.27);
+          box-shadow:
+            0 0 0 3px rgba(125,211,252,0.10),
+            0 10px 30px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.82);
+          transform: translateY(-1px);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-modal-form input:focus,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea:focus {
+          border-color: rgba(103,232,249,0.72);
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.30), transparent 42%),
+            rgba(245,250,252,0.22);
+          box-shadow:
+            0 0 0 3px rgba(103,232,249,0.09),
+            0 10px 30px rgba(0,0,0,0.12),
+            inset 0 1px 0 rgba(255,255,255,0.90);
+        }
+
+        .contact-modal-form textarea {
+          min-height: 70px;
+          max-height: 86px;
+          resize: none;
+          border-radius: 20px;
+        }
+
+        .contact-form-status {
+          padding: 10px 12px;
+          border-radius: 12px;
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .contact-form-status.is-success {
+          background: rgba(16,185,129,0.10);
+          color: #047857;
+          border: 1px solid rgba(16,185,129,0.18);
+        }
+
+        .contact-form-status.is-error {
+          background: rgba(239,68,68,0.08);
+          color: #B91C1C;
+          border: 1px solid rgba(239,68,68,0.16);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-form-status.is-success {
+          color: #6EE7B7;
+        }
+
+        .portfolio-root[data-dark="true"] .contact-form-status.is-error {
+          color: #FCA5A5;
+        }
+
+        .contact-submit-button {
+          width: 72%;
+          min-height: 42px;
+          align-self: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          margin-top: 2px;
+          border: 1px solid rgba(255,255,255,0.50);
+          border-radius: 999px;
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.18), transparent 42%),
+            rgba(18,30,42,0.22);
+          color: #F5FAFD;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.22s ease, opacity 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.72),
+            0 10px 28px rgba(3,18,30,0.13);
+          backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+          -webkit-backdrop-filter: blur(30px) saturate(175%) contrast(108%);
+        }
+
+        .contact-submit-button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.23), transparent 42%),
+            rgba(18,30,42,0.28);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.82),
+            0 14px 34px rgba(3,18,30,0.18);
+        }
+
+        .contact-submit-button:active:not(:disabled) {
+          transform: scale(0.985);
+        }
+
+        .contact-submit-button:disabled {
+          opacity: 0.62;
+          cursor: wait;
+        }
+
+        .portfolio-root[data-dark="true"] .contact-submit-button {
+          border-color: rgba(255,255,255,0.56);
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.26), transparent 42%),
+            rgba(245,250,252,0.18);
+          color: #0A3347;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.84),
+            0 10px 28px rgba(0,0,0,0.13);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-submit-button:hover:not(:disabled) {
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.32), transparent 42%),
+            rgba(245,250,252,0.24);
+        }
+
+        .contact-form-note {
+          margin: 0;
+          text-align: center;
+          font-size: 10px;
+          line-height: 1.5;
+          color: rgba(228,241,248,0.64);
+        }
+
+        .portfolio-root[data-dark="true"] .contact-form-note {
+          color: rgba(9,48,68,0.62);
+        }
+
+        @keyframes contactBackdropIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes contactCardIn {
+          from {
+            opacity: 0;
+            transform: translateY(18px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes contactSpinner {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+          .contact-modal-backdrop {
+            align-items: center;
+            padding: 10px;
+          }
+
+          .contact-modal-card {
+            width: min(92vw, calc((100vh - 20px) * 9 / 16));
+            aspect-ratio: 9 / 16;
+            height: auto;
+            max-height: calc(100vh - 20px);
+            padding: 22px 17px 16px;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+          }
+
+          .contact-modal-header {
+            padding-right: 38px;
+            margin-bottom: 12px;
+          }
+
+          .contact-modal-header h2 {
+            font-size: clamp(28px, 8vw, 34px);
+          }
+
+          .contact-modal-header p {
+            font-size: 11px;
+            line-height: 1.45;
+          }
+
+          .contact-modal-direct {
+            grid-column: auto;
+            grid-row: auto;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+            margin-bottom: 10px;
+          }
+
+          .contact-direct-item {
+            padding: 8px;
+            gap: 7px;
+            border-radius: 12px;
+          }
+
+          .contact-modal-form {
+            grid-column: auto;
+            grid-row: auto;
+            flex: 1 1 auto;
+            justify-content: space-between;
+            gap: 7px;
+            min-height: 0;
+          }
+
+          .contact-modal-form input,
+          .contact-modal-form textarea {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 999px;
+          }
+
+          .contact-modal-form textarea {
+            min-height: 64px;
+            max-height: 72px;
+          }
+
+          .contact-submit-button {
+            width: 72%;
+            min-height: 40px;
+          }
+
+          .contact-modal-close {
+            top: 13px;
+            right: 13px;
+            width: 34px;
+            height: 34px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .contact-modal-backdrop,
+          .contact-modal-card {
+            animation: none;
+            opacity: 1;
+            transform: none;
+          }
+
+          .contact-submit-spinner {
+            animation: none;
+          }
+        }
+
+        /* ============================================================
+           GET IN TOUCH — CRYSTAL ICE MASTER STYLE
+           ------------------------------------------------------------
+           IMPORTANT:
+           This contact modal is intentionally IDENTICAL in both modes.
+           Do not introduce dark-mode overrides for this component.
+           ============================================================ */
+
+        .contact-modal-backdrop,
+        .portfolio-root[data-dark="true"] .contact-modal-backdrop {
+          background:
+            radial-gradient(circle at 18% 20%, rgba(255,255,255,0.10), transparent 28%),
+            radial-gradient(circle at 82% 76%, rgba(125,211,252,0.08), transparent 32%),
+            rgba(5,16,28,0.08) !important;
+          backdrop-filter: blur(10px) saturate(120%) !important;
+          -webkit-backdrop-filter: blur(10px) saturate(120%) !important;
+        }
+
+        .contact-modal-card,
+        .portfolio-root[data-dark="true"] .contact-modal-card {
+          border: 1px solid rgba(255,255,255,0.50) !important;
+          background:
+            radial-gradient(90% 120% at 0% 0%, rgba(255,255,255,0.14), transparent 42%),
+            radial-gradient(70% 100% at 100% 8%, rgba(125,211,252,0.10), transparent 46%),
+            radial-gradient(65% 90% at 68% 100%, rgba(148,163,184,0.08), transparent 52%),
+            rgba(13,25,38,0.24) !important;
+          color: #F4F8FC !important;
+          box-shadow:
+            0 34px 100px rgba(4,15,26,0.28),
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            inset 1px 0 0 rgba(255,255,255,0.20),
+            inset -1px 0 0 rgba(255,255,255,0.08) !important;
+          backdrop-filter: blur(34px) saturate(165%) contrast(108%) !important;
+          -webkit-backdrop-filter: blur(34px) saturate(165%) contrast(108%) !important;
+        }
+
+        /* Keep the refracted light layers identical in both modes. */
+        .contact-modal-card::before {
+          background:
+            radial-gradient(circle at 15% 18%, rgba(255,255,255,0.24), transparent 22%),
+            radial-gradient(circle at 72% 20%, rgba(186,230,253,0.14), transparent 25%),
+            radial-gradient(circle at 82% 78%, rgba(56,189,248,0.10), transparent 28%),
+            radial-gradient(circle at 34% 86%, rgba(255,255,255,0.08), transparent 25%) !important;
+          filter: blur(46px) saturate(155%) !important;
+          opacity: 0.95 !important;
+        }
+
+        .contact-modal-card::after {
+          background:
+            linear-gradient(
+              128deg,
+              rgba(255,255,255,0.15) 0%,
+              rgba(255,255,255,0.035) 18%,
+              transparent 42%,
+              transparent 74%,
+              rgba(186,230,253,0.08) 92%,
+              rgba(255,255,255,0.16) 100%
+            ) !important;
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.055),
+            inset 0 14px 34px rgba(255,255,255,0.025) !important;
+        }
+
+        /* Main heading + supporting text — identical in both modes. */
+        .contact-modal-header h2,
+        .portfolio-root[data-dark="true"] .contact-modal-header h2 {
+          color: #F5F9FC !important;
+          text-shadow: 0 2px 18px rgba(0,0,0,0.18) !important;
+        }
+
+        .contact-modal-header p,
+        .portfolio-root[data-dark="true"] .contact-modal-header p {
+          color: rgba(238,247,252,0.78) !important;
+        }
+
+        .contact-modal-eyebrow {
+          color: #123A5A !important;
+          text-shadow: 0 1px 14px rgba(125,211,252,0.22) !important;
+        }
+
+        /* Close button — same Crystal Ice treatment in both modes. */
+        .contact-modal-close,
+        .portfolio-root[data-dark="true"] .contact-modal-close {
+          border-color: rgba(255,255,255,0.54) !important;
+          background: rgba(20,32,44,0.24) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            inset 0 -1px 0 rgba(255,255,255,0.08),
+            0 8px 24px rgba(4,20,32,0.16) !important;
+        }
+
+        .contact-modal-close:hover,
+        .portfolio-root[data-dark="true"] .contact-modal-close:hover {
+          background: rgba(20,32,44,0.34) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.90),
+            0 11px 30px rgba(4,20,32,0.22) !important;
+        }
+
+        /* Email + WhatsApp pills. */
+        .contact-direct-item,
+        .portfolio-root[data-dark="true"] .contact-direct-item {
+          border-color: rgba(255,255,255,0.44) !important;
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.16), transparent 42%),
+            rgba(18,30,42,0.20) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.66),
+            inset 0 -1px 0 rgba(255,255,255,0.07),
+            0 8px 26px rgba(3,18,30,0.13) !important;
+        }
+
+        .contact-direct-item:hover,
+        .portfolio-root[data-dark="true"] .contact-direct-item:hover {
+          background:
+            radial-gradient(120% 180% at 12% 0%, rgba(255,255,255,0.21), transparent 42%),
+            rgba(18,30,42,0.27) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.76),
+            0 12px 32px rgba(3,18,30,0.18) !important;
+        }
+
+        .contact-direct-icon,
+        .portfolio-root[data-dark="true"] .contact-direct-icon {
+          border-color: rgba(255,255,255,0.48) !important;
+          background: rgba(255,255,255,0.11) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.72),
+            0 4px 14px rgba(56,189,248,0.10) !important;
+        }
+
+        .contact-direct-item small,
+        .portfolio-root[data-dark="true"] .contact-direct-item small {
+          color: rgba(235,247,252,0.70) !important;
+        }
+
+        /* Form labels. */
+        .contact-modal-form label > span,
+        .portfolio-root[data-dark="true"] .contact-modal-form label > span {
+          color: rgba(229,242,249,0.72) !important;
+        }
+
+        /* Inputs + textarea. */
+        .contact-modal-form input,
+        .contact-modal-form textarea,
+        .portfolio-root[data-dark="true"] .contact-modal-form input,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea {
+          border-color: rgba(255,255,255,0.48) !important;
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.17), transparent 42%),
+            rgba(18,30,42,0.21) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.68),
+            inset 0 -1px 0 rgba(255,255,255,0.06),
+            0 7px 24px rgba(3,18,30,0.11) !important;
+        }
+
+        .contact-modal-form input::placeholder,
+        .contact-modal-form textarea::placeholder,
+        .portfolio-root[data-dark="true"] .contact-modal-form input::placeholder,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea::placeholder {
+          color: rgba(240,248,252,0.70) !important;
+        }
+
+        .contact-modal-form input:focus,
+        .contact-modal-form textarea:focus,
+        .portfolio-root[data-dark="true"] .contact-modal-form input:focus,
+        .portfolio-root[data-dark="true"] .contact-modal-form textarea:focus {
+          border-color: rgba(186,230,253,0.82) !important;
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.22), transparent 42%),
+            rgba(18,30,42,0.27) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            0 0 0 3px rgba(125,211,252,0.10),
+            0 10px 30px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.82) !important;
+        }
+
+        /* Send button. */
+        .contact-submit-button,
+        .portfolio-root[data-dark="true"] .contact-submit-button {
+          border-color: rgba(255,255,255,0.50) !important;
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.18), transparent 42%),
+            rgba(18,30,42,0.22) !important;
+          color: #F5F9FC !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.72),
+            0 10px 28px rgba(3,18,30,0.13) !important;
+        }
+
+        .contact-submit-button:hover:not(:disabled),
+        .portfolio-root[data-dark="true"] .contact-submit-button:hover:not(:disabled) {
+          background:
+            radial-gradient(120% 190% at 12% 0%, rgba(255,255,255,0.23), transparent 42%),
+            rgba(18,30,42,0.28) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.82),
+            0 14px 34px rgba(3,18,30,0.18) !important;
+        }
+
+        .contact-form-note,
+        .portfolio-root[data-dark="true"] .contact-form-note {
+          color: rgba(228,241,248,0.64) !important;
+        }
+
+
+      `}
+
+</style>
 
       {/* ======================================================
           MAIN CONTENT
@@ -10364,18 +11373,15 @@ export default function Portfolio() {
                 })}
               </div>
 
-              <a
-                href={
-                  CONTENT.socials.find(
-                    (s) => s.label === "Email"
-                  )?.url || "mailto:deepshikkodam@gmail.com"
-                }
+              <button
+                type="button"
                 className="mobile-contact-button"
                 aria-label="Get in Touch"
                 title="Get in Touch"
+                onClick={openContactModal}
               >
                 <Mail aria-hidden="true" />
-              </a>
+              </button>
             </>
           )}
 
@@ -10463,13 +11469,7 @@ export default function Portfolio() {
                 proximity={250}
                 autoAnimate={false}
                 className="liquid-get-in-touch specular-nav-contact"
-                onClick={() => {
-                  const email =
-                    CONTENT.socials.find(
-                      (s) => s.label === "Email"
-                    )?.url || "mailto:deepsikkodam@gmail.com";
-                  window.location.href = email;
-                }}
+                onClick={openContactModal}
               >
                 Get in Touch
               </SpecularButton>
@@ -10558,24 +11558,30 @@ export default function Portfolio() {
               </a>
             ))}
 
-            <a
-              href={
-                CONTENT.socials.find(
-                  (s) =>
-                    s.label === "Email"
-                )?.url || "mailto:deepshikkodam@gmail.com"
-              }
+            <button
+              type="button"
               style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 fontSize: 15,
                 fontWeight: 500,
                 padding: "8px 4px",
+                border: "none",
+                background: "transparent",
+                color: "inherit",
+                fontFamily: "inherit",
+                textAlign: "center",
+                cursor: "pointer",
               }}
-              onClick={() =>
-                setMenuOpen(false)
-              }
+              onClick={() => {
+                setMenuOpen(false);
+                openContactModal();
+              }}
             >
               Get in Touch
-            </a>
+            </button>
 
             <button
               onClick={() =>
@@ -10585,8 +11591,7 @@ export default function Portfolio() {
               style={{
                 background: theme.pill,
                 color: theme.ink,
-                alignSelf:
-                  "flex-start",
+                alignSelf: "flex-start",
                 marginTop: 8,
               }}
             >
@@ -10600,6 +11605,163 @@ export default function Portfolio() {
                 ? "Aquatic Mist Dark Mode"
                 : "Crystal Ice Mode"}
             </button>
+          </div>
+        )}
+
+        {/* ====================================================
+            CONTACT MODAL
+            ==================================================== */}
+        {contactOpen && (
+          <div
+            className="contact-modal-backdrop"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeContactModal();
+              }
+            }}
+          >
+            <div
+              className="contact-modal-card specular-border-target"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="contact-modal-title"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="contact-modal-close"
+                onClick={closeContactModal}
+                aria-label="Close contact form"
+                disabled={contactSubmitting}
+              >
+                <X size={18} />
+              </button>
+
+              <div className="contact-modal-header">
+                <span className="contact-modal-eyebrow">
+                  LET'S CONNECT
+                </span>
+
+                <h2 id="contact-modal-title">
+                  Get in touch.
+                </h2>
+
+                <p>
+                  Have a project, opportunity, collaboration, or just
+                  something interesting to discuss? Send me a message.
+                </p>
+              </div>
+
+              <div className="contact-modal-direct">
+                <a
+                  href="mailto:deepshikkodam@gmail.com"
+                  className="contact-direct-item"
+                >
+                  <span className="contact-direct-icon">
+                    <Mail size={16} />
+                  </span>
+                  <span>
+                    <small>Email</small>
+                    <strong>deepshikkodam@gmail.com</strong>
+                  </span>
+                </a>
+
+                <a
+                  href="https://wa.me/918374831773"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-direct-item"
+                >
+                  <span className="contact-direct-icon">
+                    <Phone size={16} />
+                  </span>
+                  <span>
+                    <small>WhatsApp</small>
+                    <strong>+91 83748 31773</strong>
+                  </span>
+                </a>
+              </div>
+
+              <form
+                className="contact-modal-form"
+                onSubmit={handleContactSubmit}
+              >
+                <label>
+                  <span>FULL NAME</span>
+                  <input
+                    type="text"
+                    name="name"
+                    value={contactForm.name}
+                    onChange={handleContactChange}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                    required
+                  />
+                </label>
+
+                <label>
+                  <span>EMAIL ADDRESS</span>
+                  <input
+                    type="email"
+                    name="email"
+                    value={contactForm.email}
+                    onChange={handleContactChange}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                </label>
+
+                <label>
+                  <span>PURPOSE</span>
+                  <textarea
+                    name="purpose"
+                    value={contactForm.purpose}
+                    onChange={handleContactChange}
+                    placeholder="What would you like to discuss?"
+                    rows={4}
+                    required
+                  />
+                </label>
+
+                {contactStatus && (
+                  <div
+                    className={`contact-form-status ${
+                      contactStatus.startsWith("Message sent")
+                        ? "is-success"
+                        : "is-error"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {contactStatus}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="contact-submit-button specular-border-target"
+                  disabled={contactSubmitting}
+                >
+                  {contactSubmitting ? (
+                    <>
+                      <span className="contact-submit-spinner" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send message
+                      <span aria-hidden="true">↗</span>
+                    </>
+                  )}
+                </button>
+
+                <p className="contact-form-note">
+                  Your message will be sent directly to my email.
+                </p>
+              </form>
+            </div>
           </div>
         )}
 
@@ -10855,24 +12017,22 @@ export default function Portfolio() {
                 gap: 12,
               }}
             >
-              <a
-                href={
-                  CONTENT.socials.find(
-                    (s) =>
-                      s.label ===
-                      "Email"
-                  )?.url || "mailto:deepshikkodam@gmail.com"
-                }
+              <button
+                type="button"
                 className="pill-btn"
+                onClick={openContactModal}
                 style={{
                   background:
                     theme.pill,
                   color:
                     theme.ink,
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                 }}
               >
                 Say hi 👋
-              </a>
+              </button>
 
               <a
                 href={CONTENT.resumeUrl}
@@ -12659,20 +13819,31 @@ lift={isMobile ? 12 : 30}
 
           <div className="socials-lightfall-grid">
               {CONTENT.socials.map(
-                (s) => (
-                  <a
-                    key={s.label}
-                    href={s.url}
-                    className={`social-glass-pill ${
-                      ["GitHub", "LinkedIn", "Email", "Instagram", "Twitter"].includes(s.label)
-                        ? "specular-border-target"
-                        : ""
-                    }`}
-                  >
-                    <s.icon size={18} />
-                    <span>{s.label}</span>
-                  </a>
-                )
+                (s) =>
+                  s.label === "Email" ? (
+                    <button
+                      key={s.label}
+                      type="button"
+                      className="social-glass-pill specular-border-target"
+                      onClick={openContactModal}
+                    >
+                      <s.icon size={18} />
+                      <span>{s.label}</span>
+                    </button>
+                  ) : (
+                    <a
+                      key={s.label}
+                      href={s.url}
+                      className={`social-glass-pill ${
+                        ["GitHub", "LinkedIn", "Instagram", "Twitter"].includes(s.label)
+                          ? "specular-border-target"
+                          : ""
+                      }`}
+                    >
+                      <s.icon size={18} />
+                      <span>{s.label}</span>
+                    </a>
+                  )
               )}
             </div>
 
