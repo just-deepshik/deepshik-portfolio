@@ -1583,6 +1583,12 @@ function DNAOfDeepshik({ isMobile }) {
     const resize = () => {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
+
+      // Keep the full DNA comfortably inside narrow mobile screens.
+      // Desktop remains exactly the same size.
+      const dnaScale = width <= 640 ? 0.62 : 1;
+      group.scale.setScalar(dnaScale);
+
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
