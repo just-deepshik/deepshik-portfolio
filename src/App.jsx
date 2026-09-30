@@ -9124,7 +9124,7 @@ export default function Portfolio() {
           overflow: "hidden",
           minHeight:
             isMobile
-              ? 420
+              ? 720
               : 520,
           display: "flex",
           alignItems: "center",
