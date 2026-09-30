@@ -498,6 +498,35 @@ function greeting(hour) {
 }
 
 /* ============================================================
+   MOBILE / WEBGL SAFETY HELPERS
+   ============================================================ */
+
+function isMobileViewport() {
+  return typeof window !== "undefined" && window.innerWidth <= 768;
+}
+
+function supportsWebGL() {
+  if (typeof document === "undefined") return false;
+
+  try {
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl2", { powerPreference: "low-power" }) ||
+      canvas.getContext("webgl", { powerPreference: "low-power" }) ||
+      canvas.getContext("experimental-webgl");
+    return !!gl;
+  } catch {
+    return false;
+  }
+}
+
+function getSafeDpr(maxDesktop = 2, maxMobile = 1.25) {
+  if (typeof window === "undefined") return 1;
+  const dpr = window.devicePixelRatio || 1;
+  return Math.min(dpr, isMobileViewport() ? maxMobile : maxDesktop);
+}
+
+/* ============================================================
    MOBILE HOOK
    ============================================================ */
 
@@ -633,13 +662,23 @@ function SpecularButton({
     const fx = fxRef.current;
     if (!btn || !fx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const renderer = new Renderer({
+    // The visual border has a CSS fallback. Avoid creating a WebGL context
+    // for every button on mobile or on browsers without reliable WebGL.
+    if (isMobileViewport() || !supportsWebGL()) return;
+
+    const dpr = getSafeDpr(2, 1);
+    let renderer;
+    try {
+      renderer = new Renderer({
       alpha: true,
       premultipliedAlpha: true,
       antialias: true,
-      dpr,
-    });
+        dpr,
+      });
+    } catch (error) {
+      console.warn("Specular WebGL effect disabled:", error);
+      return;
+    }
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
@@ -1019,11 +1058,21 @@ const Lightfall = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const renderer = new Renderer({
-      dpr: dpr ?? (typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1),
+    // Mobile gets a lightweight CSS background instead of another full-screen
+    // WebGL renderer. This prevents GPU/context exhaustion on lower-end phones.
+    if (isMobileViewport() || !supportsWebGL()) return;
+
+    let renderer;
+    try {
+      renderer = new Renderer({
+      dpr: dpr ?? getSafeDpr(2, 1.25),
       alpha: true,
-      antialias: true
-    });
+        antialias: true
+      });
+    } catch (error) {
+      console.warn("Lightfall WebGL effect disabled:", error);
+      return;
+    }
     rendererRef.current = renderer;
     const gl = renderer.gl;
     const canvas = gl.canvas;
@@ -2064,6 +2113,14 @@ function STLModelViewer({ isMobile }) {
     const mount = mountRef.current;
     if (!mount) return;
 
+    // Keep the mobile page responsive. The STL viewer remains in the layout,
+    // but its WebGL renderer is not created on phones.
+    if (isMobileViewport() || !supportsWebGL()) {
+      setModelLoaded(false);
+      setModelError(isMobileViewport() ? "3D viewer is optimized for desktop. Use the Source link below to view the model." : "3D rendering is unavailable in this browser.");
+      return;
+    }
+
     let disposed = false;
 
     const scene = new THREE.Scene();
@@ -2083,7 +2140,7 @@ function STLModelViewer({ isMobile }) {
     });
 
     renderer.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, 2)
+      getSafeDpr(2, 1.25)
     );
     renderer.setSize(
       mount.clientWidth,
@@ -2927,9 +2984,19 @@ const GridScan = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // GridScan is intentionally disabled on mobile. The section keeps its
+    // layout/background, but avoids a second continuous Three.js renderer.
+    if (isMobileViewport() || !supportsWebGL()) return;
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (error) {
+      console.warn("GridScan WebGL effect disabled:", error);
+      return;
+    }
     rendererRef.current = renderer;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(getSafeDpr(2, 1.25));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NoToneMapping;
@@ -9319,7 +9386,7 @@ export default function Portfolio() {
           loop
           muted={videoMuted}
           playsInline
-          preload="auto"
+          preload="metadata"
           style={{
             position: "absolute",
             inset: 0,
@@ -10456,7 +10523,12 @@ lift={isMobile ? 12 : 30}
           FOOTER
           ====================================================== */}
 
-      <div className="socials-footer-lightfall">
+      <div
+        className="socials-footer-lightfall"
+        style={{
+          background: "radial-gradient(circle at 50% 20%, rgba(56,189,248,0.16), transparent 45%), #07131D",
+        }}
+      >
         <Lightfall
           colors={["#A6C8FF", "#5227FF", "#1451B7"]}
           backgroundColor="#07131D"
