@@ -4,6 +4,7 @@ import * as faceapi from "face-api.js";
 import { BloomEffect, ChromaticAberrationEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
 import { Renderer, Program, Mesh, Triangle, Color } from "ogl";
 import * as THREE from "three";
+import AIAssistant from "./components/AIAssistant";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import {
   Menu,
@@ -13874,6 +13875,7 @@ lift={isMobile ? 12 : 30}
         </section>
         </div>
       </div>
+     <AIAssistant />
     </div>
   );
 }
