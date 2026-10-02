@@ -862,49 +862,80 @@ export default function AIAssistant() {
 
 
 
-  // Hide B.L.U.E. while the main page is moving, then bring it back
-
-  // with an iOS-style spring once scrolling has actually stopped.
-
+  // Detect main-page scrolling only for the launcher.
+  // The assistant panel itself must NEVER hide while it is open.
   useEffect(() => {
-
     let stopTimer;
 
-
-
     const handlePageScroll = () => {
+      if (open) return;
 
       setIsPageScrolling(true);
-
       window.clearTimeout(stopTimer);
 
-
-
       stopTimer = window.setTimeout(() => {
-
         setIsPageScrolling(false);
-
       }, 360);
-
     };
-
-
 
     window.addEventListener("scroll", handlePageScroll, { passive: true });
 
+    return () => {
+      window.removeEventListener("scroll", handlePageScroll);
+      window.clearTimeout(stopTimer);
+    };
+  }, [open]);
 
+  // Lock the portfolio page while B.L.U.E. is open.
+  // The assistant's own .dk-ai-body remains independently scrollable.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return undefined;
+    }
+
+    if (!open) {
+      return undefined;
+    }
+
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+    const previousBodyPosition = body.style.position;
+    const previousBodyTop = body.style.top;
+    const previousBodyWidth = body.style.width;
+    const previousBodyTouchAction = body.style.touchAction;
+
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.touchAction = "none";
+
+    setIsPageScrolling(false);
 
     return () => {
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
 
-      window.removeEventListener("scroll", handlePageScroll);
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      body.style.position = previousBodyPosition;
+      body.style.top = previousBodyTop;
+      body.style.width = previousBodyWidth;
+      body.style.touchAction = previousBodyTouchAction;
 
-      window.clearTimeout(stopTimer);
-
+      window.scrollTo(0, scrollY);
     };
-
-  }, []);
-
-
+  }, [open]);
 
     useEffect(() => {
     const SpeechRecognition =
@@ -1272,49 +1303,17 @@ useEffect(() => {
   }, [open]);
 
   const navigateTo = (section) => {
-
-
-
-    if (!section) return;
-
-
-
-
-
-
+    // The portfolio page is locked while B.L.U.E. is open.
+    if (!section || open) return;
 
     const target = document.getElementById(section);
 
-
-
-
-
-
-
     if (!target) return;
 
-
-
-
-
-
-
     target.scrollIntoView({
-
-
-
       behavior: "smooth",
-
-
-
       block: "start",
-
-
-
     });
-
-
-
   };
 
 
@@ -1995,69 +1994,15 @@ useEffect(() => {
 
 
         /* =========================
-
-           IOS-LIKE SCROLL AUTO-HIDE
-
+           LAUNCHER MOTION
            ========================= */
 
-
-
-        .dk-ai-launcher,
-
-        .dk-ai-panel {
-
-          will-change: transform, opacity;
-
-        }
-
-
-
-        .dk-ai-launcher.dk-ai-scroll-hidden {
-
-          opacity: 0 !important;
-
-          pointer-events: none !important;
-
-          transform: translate3d(0, calc(100% + 22px), 0) scale(0.94) !important;
-
+        /* The open assistant is never auto-hidden.
+           Mobile-only launcher hiding is defined below. */
+        .dk-ai-launcher:not(.dk-ai-scroll-hidden) {
           transition:
-
-            transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
-
-            opacity 0.24s ease !important;
-
-        }
-
-
-
-        .dk-ai-panel.dk-ai-scroll-hidden {
-
-          opacity: 0 !important;
-
-          pointer-events: none !important;
-
-          transform: translate3d(0, calc(100% + 30px), 0) scale(0.94) !important;
-
-          transition:
-
-            transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
-
-            opacity 0.24s ease !important;
-
-        }
-
-
-
-        .dk-ai-launcher:not(.dk-ai-scroll-hidden),
-
-        .dk-ai-panel:not(.dk-ai-scroll-hidden) {
-
-          transition:
-
             transform 0.58s cubic-bezier(0.16, 1, 0.3, 1),
-
             opacity 0.30s ease !important;
-
         }
 
 
@@ -2149,6 +2094,8 @@ useEffect(() => {
           animation: dkAiIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 
           pointer-events: auto !important;
+          overscroll-behavior: contain;
+          touch-action: pan-y;
 
           isolation: isolate;
 
@@ -2349,6 +2296,10 @@ useEffect(() => {
           min-height: 0;
 
           overflow-y: auto;
+          overflow-x: hidden;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          touch-action: pan-y;
 
           padding: 16px;
 
@@ -3206,6 +3157,23 @@ useEffect(() => {
 
         @media (max-width: 640px) {
 
+          /* Mobile only: hide the launcher while the main page is scrolling.
+             The assistant panel is deliberately excluded from this behavior. */
+          .dk-ai-launcher.dk-ai-scroll-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translate3d(0, calc(100% + 22px), 0) scale(0.94) !important;
+            transition:
+              transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.24s ease !important;
+          }
+
+          .dk-ai-launcher:not(.dk-ai-scroll-hidden) {
+            transition:
+              transform 0.58s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.30s ease !important;
+          }
+
           /* Mobile B.L.U.E. launcher — nav-like width, but thinner. */
 
           .dk-ai-launcher {
@@ -3877,11 +3845,7 @@ useEffect(() => {
 
         <section
 
-          className={`dk-ai-panel ${
-
-            isPageScrolling ? "dk-ai-scroll-hidden" : ""
-
-          }`}
+          className="dk-ai-panel"
 
           aria-label="B.L.U.E. portfolio assistant"
 
