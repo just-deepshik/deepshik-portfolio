@@ -1520,10 +1520,32 @@ useEffect(() => {
     synth.cancel();
     setSpeechPaused(false);
 
-    const utterance = new SpeechSynthesisUtterance(message.text);
+    // Use a natural English voice when the browser exposes one, then
+    // fall back to the browser's default voice. A slightly faster rate
+    // keeps B.L.U.E. conversational without becoming rushed.
+    const voices = synth.getVoices();
+    const preferredVoice = voices.find((voice) => {
+      const name = voice.name.toLowerCase();
+      return (
+        /microsoft.*(aria|jenny|guy|davis)/i.test(name) ||
+        /google us english/i.test(name) ||
+        /samantha/i.test(name)
+      ) && voice.lang.toLowerCase().startsWith("en-us");
+    }) || voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith("en-us")
+    );
+
+    const spokenText = message.text
+      .replace(/\s+/g, " ")
+      .replace(/\s+([,.!?;:])/g, "$1")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = "en-US";
-    utterance.rate = 0.98;
-    utterance.pitch = 1;
+    if (preferredVoice) utterance.voice = preferredVoice;
+    utterance.rate = 1.12;
+    utterance.pitch = 0.98;
+    utterance.volume = 1;
 
     utterance.onstart = () => {
       setSpeakingId(message.id);
@@ -3707,7 +3729,7 @@ useEffect(() => {
 
           <span className="dk-ai-launcher-label">
 
-            Ask B.L.U.E.
+            Talk to B.L.U.E.
 
           </span>
 
