@@ -1543,9 +1543,9 @@ useEffect(() => {
     const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = "en-US";
     if (preferredVoice) utterance.voice = preferredVoice;
-    utterance.rate = 1.12;
-    utterance.pitch = 0.98;
-    utterance.volume = 1;
+    utterance.rate = 1.5;
+    utterance.pitch = 1.0;
+    utterance.volume = 2.0;
 
     utterance.onstart = () => {
       setSpeakingId(message.id);
@@ -1634,7 +1634,7 @@ useEffect(() => {
 
         role: "assistant",
 
-        text: "Hi — I'm B.L.U.E., Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
+        text: "Hi — I'm BLUE, Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
 
         source: "Portfolio",
 
@@ -1685,7 +1685,7 @@ useEffect(() => {
 
         role: "assistant",
 
-        text: "Hi — I'm B.L.U.E., Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
+        text: "Hi — I'm BLUE, Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
 
         source: "Portfolio",
 
@@ -1792,6 +1792,25 @@ useEffect(() => {
         }
 
 
+
+        /* ============================================================
+           CRYSTAL ICE LAUNCHER SPECULAR BORDER
+           Matches the hamburger/nav border-shine treatment.
+           ============================================================ */
+        @property --dk-ai-specular-border-angle {
+          syntax: "<angle>";
+          inherits: false;
+          initial-value: 0deg;
+        }
+
+        @keyframes dkAiSpecularBorderSweep {
+          from {
+            --dk-ai-specular-border-angle: 0deg;
+          }
+          to {
+            --dk-ai-specular-border-angle: 360deg;
+          }
+        }
 
         /* =========================
 
@@ -3284,9 +3303,13 @@ useEffect(() => {
 
             box-shadow:
 
-              0 9px 18px rgba(41, 63, 76, 0.18),
+              0 -8px 20px rgba(41, 63, 76, 0.13),
 
-              0 2px 5px rgba(41, 63, 76, 0.08),
+              0 -2px 8px rgba(56, 189, 248, 0.15),
+
+              0 9px 18px rgba(41, 63, 76, 0.12),
+
+              0 2px 5px rgba(41, 63, 76, 0.06),
 
               inset 0 1px 0 rgba(255, 255, 255, 0.95),
 
@@ -3295,6 +3318,92 @@ useEffect(() => {
             backdrop-filter: blur(24px) saturate(135%);
 
             -webkit-backdrop-filter: blur(24px) saturate(135%);
+
+          }
+
+
+
+          .dk-ai-launcher.dk-ai-crystal-mobile {
+
+            --dk-ai-specular-border-color: rgba(255, 255, 255, 0.98);
+
+            --dk-ai-specular-border-accent: rgba(14, 165, 233, 0.82);
+
+            --dk-ai-specular-border-opacity: 0.86;
+
+            --dk-ai-specular-border-angle: 0deg;
+
+            isolation: isolate;
+
+          }
+
+
+
+          .dk-ai-launcher.dk-ai-crystal-mobile::after {
+
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            box-sizing: border-box;
+
+            border-radius: inherit;
+
+            padding: 1px;
+
+            pointer-events: none;
+
+            z-index: 20;
+
+            opacity: var(--dk-ai-specular-border-opacity);
+
+            background: conic-gradient(
+
+              from var(--dk-ai-specular-border-angle),
+
+              transparent 0deg,
+
+              transparent 286deg,
+
+              var(--dk-ai-specular-border-accent) 326deg,
+
+              var(--dk-ai-specular-border-color) 344deg,
+
+              rgba(255, 255, 255, 0.24) 352deg,
+
+              transparent 360deg
+
+            );
+
+            -webkit-mask:
+
+              linear-gradient(#000 0 0) content-box,
+
+              linear-gradient(#000 0 0);
+
+            -webkit-mask-composite: xor;
+
+            mask:
+
+              linear-gradient(#000 0 0) content-box,
+
+              linear-gradient(#000 0 0);
+
+            mask-composite: exclude;
+
+            animation: dkAiSpecularBorderSweep 3.4s linear infinite;
+
+            will-change: transform;
+
+          }
+
+
+
+          .dk-ai-launcher.dk-ai-crystal-mobile:hover::after {
+
+            opacity: 0.96;
 
           }
 
@@ -3706,6 +3815,18 @@ useEffect(() => {
 
         }
 
+        @media (prefers-reduced-motion: reduce) {
+
+          .dk-ai-launcher.dk-ai-crystal-mobile::after {
+
+            animation: none;
+
+            opacity: 0.62;
+
+          }
+
+        }
+
       `}</style>
 
 
@@ -3719,6 +3840,10 @@ useEffect(() => {
           className={`dk-ai-launcher ${
 
             isCrystalIce ? "dk-ai-crystal-mobile" : ""
+
+          } ${
+
+            isCrystalIce ? "dk-ai-specular-border-target" : ""
 
           } ${isPageScrolling ? "dk-ai-scroll-hidden" : ""}`}
 
