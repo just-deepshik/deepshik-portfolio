@@ -32,6 +32,10 @@ import {
 
 
 
+  Play,
+
+
+
   Send,
 
 
@@ -1505,14 +1509,22 @@ useEffect(() => {
     const synth = window.speechSynthesis;
 
     if (speakingId === message.id) {
-      if (synth.paused) {
-        synth.resume();
+      if (speechPaused || synth.paused) {
+        try {
+          synth.resume();
+        } catch {
+          // Ignore browser speech-synthesis resume errors.
+        }
         setSpeechPaused(false);
         return;
       }
 
-      synth.pause();
-      setSpeechPaused(true);
+      try {
+        synth.pause();
+        setSpeechPaused(true);
+      } catch {
+        // Ignore browser speech-synthesis pause errors.
+      }
       return;
     }
 
@@ -3964,7 +3976,9 @@ if (message.type === "conversation-end") {
                           onClick={() => toggleSpeech(message)}
                           aria-label={
                             speakingId === message.id
-                              ? "Stop speaking"
+                              ? speechPaused
+                                ? "Resume speaking"
+                                : "Pause speaking"
                               : "Read this response aloud"
                           }
                           title={
