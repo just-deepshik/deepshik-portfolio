@@ -1710,4 +1710,244 @@
           }
 
         }
+/* =========================================================
+   LIBRARIES.DEV BOT AVATARS
+   B.L.U.E. assistant integration
+   ========================================================= */
 
+.dk-ai-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+}
+
+.dk-ai-avatar > * {
+  display: block;
+  width: 42px;
+  height: 42px;
+}
+
+.dk-ai-launcher-bot {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dk-ai-launcher-bot > * {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.dk-ai-typing-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+
+.dk-ai-typing-avatar > * {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+.dk-ai-avatar svg,
+.dk-ai-avatar canvas,
+.dk-ai-launcher-bot svg,
+.dk-ai-launcher-bot canvas,
+.dk-ai-typing-avatar svg,
+.dk-ai-typing-avatar canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 640px) {
+  .dk-ai-avatar {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .dk-ai-avatar > * {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dk-ai-launcher-bot {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+  }
+
+  .dk-ai-launcher-bot > * {
+    width: 24px;
+    height: 24px;
+  }
+
+  .dk-ai-typing-avatar {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .dk-ai-typing-avatar > * {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dk-ai-avatar {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .dk-ai-avatar > * {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dk-ai-launcher-bot {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .dk-ai-launcher-bot > * {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* =========================================================
+   B.L.U.E. AVATAR + LAUNCHER SIZE REFINEMENT
+   Slightly larger bot avatar and nav-sized launcher
+   ========================================================= */
+
+/* Header B.L.U.E. avatar — slightly larger */
+.dk-ai-avatar {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+}
+
+.dk-ai-avatar > * {
+  width: 46px;
+  height: 46px;
+}
+
+/* Desktop launcher — larger, closer to navigation-pill proportions */
+.dk-ai-launcher {
+  min-width: 112px;
+  min-height: 44px;
+  height: 44px;
+  padding: 6px 14px 6px 9px;
+  gap: 8px;
+}
+
+.dk-ai-launcher-bot {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+
+.dk-ai-launcher-bot > * {
+  width: 40px;
+  height: 40px;
+}
+
+.dk-ai-launcher-label {
+  font-size: 11px !important;
+}
+
+/* Mobile launcher — nav-bar-like height while retaining full-width layout */
+@media (max-width: 640px) {
+  .dk-ai-avatar {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .dk-ai-avatar > * {
+    width: 42px;
+    height: 42px;
+  }
+
+  .dk-ai-launcher {
+    min-width: 0 !important;
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 3px 14px !important;
+    gap: 8px;
+  }
+
+  .dk-ai-launcher-bot {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .dk-ai-launcher-bot > * {
+    width: 36px;
+    height: 36px;
+  }
+
+  .dk-ai-launcher-label {
+    font-size: 10.5px !important;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .dk-ai-avatar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .dk-ai-avatar > * {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dk-ai-launcher {
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 3px 12px !important;
+  }
+
+  .dk-ai-launcher-bot {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .dk-ai-launcher-bot > * {
+    width: 34px;
+    height: 34px;
+  }
+}
