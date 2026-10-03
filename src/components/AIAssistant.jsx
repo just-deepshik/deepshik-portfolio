@@ -676,7 +676,7 @@ export default function AIAssistant() {
 
       role: "assistant",
 
-      text: "Hi — I'm BLUE., Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
+      text: "Hi — I'm BLUE., Deepshik's personal assistant. Ask me about his work, skills, projects, research, or experience.",
 
       source: "Portfolio",
 
@@ -1411,7 +1411,8 @@ export default function AIAssistant() {
               face="eyes"
               state="default"
               size={32}
-              shading="smooth"
+              color="#0ac9df"
+              shading="fabric"
               theme={isCrystalIce ? "light" : "auto"}
               interactive={false}
               speed={0.8}
@@ -1422,7 +1423,7 @@ export default function AIAssistant() {
 
           <span className="dk-ai-launcher-label">
 
-            Ask to B.L.U.E.
+            Ask to B.L.U.E
 
           </span>
 
@@ -1451,7 +1452,8 @@ export default function AIAssistant() {
                   face="mouth"
                   state={typing ? "working" : "default"}
                   size={42}
-                  shading="smooth"
+                  color="#0ac9df"
+                  shading="fabric"
                   theme={isCrystalIce ? "light" : "auto"}
                   interactive
                   speed={0.9}
@@ -1466,7 +1468,7 @@ export default function AIAssistant() {
 
                 <div className="dk-ai-status">
 
-                  Bridging Learning, Understanding & Experience
+                  Bot for Learning, Understanding & Engagement
 
                 </div>
 
@@ -1694,7 +1696,8 @@ if (message.type === "conversation-end") {
                     face="mouth"
                     state="working"
                     size={30}
-                    shading="smooth"
+                    color="#0ac9df"
+                    shading="fabric"
                     theme={isCrystalIce ? "light" : "auto"}
                     interactive={false}
                     speed={1.15}
