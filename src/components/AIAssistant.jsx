@@ -6,7 +6,6 @@ import "./AIAssistant.css";
 
 import {
 
-  Bot,
 
   ChevronRight,
 
@@ -31,6 +30,7 @@ import {
 } from "lucide-react";
 
 import { portfolioKnowledge } from "../data/portfolioKnowledge";
+import { BotAvatar } from "bot-avatars";
 
 const QUICK_PROMPTS = [
 
@@ -1404,9 +1404,19 @@ export default function AIAssistant() {
 
         >
 
-          <span className="dk-ai-launcher-icon">
+          <span className="dk-ai-launcher-icon dk-ai-launcher-bot">
 
-            <Sparkles size={15} />
+            <BotAvatar
+              type="droid"
+              face="eyes"
+              state="default"
+              size={32}
+              shading="smooth"
+              theme={isCrystalIce ? "light" : "auto"}
+              interactive={false}
+              speed={0.8}
+              seed={0.42}
+            />
 
           </span>
 
@@ -1436,7 +1446,17 @@ export default function AIAssistant() {
 
               <div className="dk-ai-avatar">
 
-                <Bot size={19} />
+                <BotAvatar
+                  type="droid"
+                  face="mouth"
+                  state={typing ? "working" : "default"}
+                  size={42}
+                  shading="smooth"
+                  theme={isCrystalIce ? "light" : "auto"}
+                  interactive
+                  speed={0.9}
+                  seed={0.42}
+                />
 
               </div>
 
@@ -1666,19 +1686,20 @@ if (message.type === "conversation-end") {
               <div className="dk-ai-message-row assistant">
 
                 <div
-
-                  className="dk-ai-typing"
-
-                  aria-label="B.L.U.E. is typing"
-
+                  className="dk-ai-typing dk-ai-typing-avatar"
+                  aria-label="B.L.U.E. is working"
                 >
-
-                  <span />
-
-                  <span />
-
-                  <span />
-
+                  <BotAvatar
+                    type="droid"
+                    face="mouth"
+                    state="working"
+                    size={30}
+                    shading="smooth"
+                    theme={isCrystalIce ? "light" : "auto"}
+                    interactive={false}
+                    speed={1.15}
+                    seed={0.42}
+                  />
                 </div>
 
               </div>
