@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bot-avatars": "^0.2.2",
     "face-api.js": "^0.22.2",
     "gl-matrix": "^3.4.4",
     "lucide-react": "^1.48.0",
@@ -19,8 +20,8 @@
     "postprocessing": "^6.39.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "bot-avatars": "^0.2.2",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "voice-glow": "^0.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
