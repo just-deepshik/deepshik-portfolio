@@ -901,6 +901,29 @@
           transform: translateY(-1px);
         }
 
+        .dk-ai-mic.armed {
+          color: #062b43 !important;
+          background: rgba(125, 211, 252, 0.18) !important;
+          border-color: rgba(125, 211, 252, 0.42) !important;
+          box-shadow:
+            0 0 0 4px rgba(125, 211, 252, 0.06),
+            0 5px 18px rgba(125, 211, 252, 0.12);
+          animation: dkAiMicArmedPulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes dkAiMicArmedPulse {
+          0%, 100% {
+            box-shadow:
+              0 0 0 3px rgba(125, 211, 252, 0.04),
+              0 5px 16px rgba(125, 211, 252, 0.08);
+          }
+          50% {
+            box-shadow:
+              0 0 0 7px rgba(125, 211, 252, 0.035),
+              0 5px 22px rgba(125, 211, 252, 0.18);
+          }
+        }
+
         .dk-ai-mic:active {
           transform: scale(0.95);
         }
