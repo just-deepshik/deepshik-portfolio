@@ -7547,7 +7547,7 @@ export default function Portfolio() {
 .dna-section {
           position: relative;
           overflow: hidden;
-          min-height: 100vh;
+          min-height: 120vh;
           padding: 120px 24px 110px;
           background:
             radial-gradient(circle at 18% 25%, rgba(56,189,248,0.10), transparent 28%),
