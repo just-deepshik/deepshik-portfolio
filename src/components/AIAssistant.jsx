@@ -693,6 +693,8 @@ export default function AIAssistant() {
 
   const [isListening, setIsListening] = useState(false);
 
+  const [voiceAwake, setVoiceAwake] = useState(false);
+
   const [voiceSupported, setVoiceSupported] = useState(true);
 
   const [speakingId, setSpeakingId] = useState(null);
@@ -713,6 +715,17 @@ export default function AIAssistant() {
 
   const voiceLiveTranscriptRef = useRef("");
 
+  const voiceCommandRef = useRef("");
+
+  const voiceWakeDetectedRef = useRef(false);
+  const voiceManualModeRef = useRef(false);
+
+  const voiceSilenceTimerRef = useRef(null);
+
+  const voicePermissionGrantedRef = useRef(false);
+
+  const assistantOpenRef = useRef(false);
+
   const shouldSubmitVoiceRef = useRef(false);
 
   const submitRef = useRef(null);
@@ -724,6 +737,10 @@ export default function AIAssistant() {
   const voicesRef = useRef([]);
   const recognitionActiveRef = useRef(false);
   const pageScrollStateRef = useRef(false);
+
+  useEffect(() => {
+    assistantOpenRef.current = open;
+  }, [open]);
 
   // Detect main-page scrolling only for the launcher.
   // React state changes only when the scrolling state actually changes.
@@ -807,6 +824,48 @@ export default function AIAssistant() {
     };
   }, [open]);
 
+    const extractWakeCommand = (text = "") => {
+      const wakePattern = /\bhey\s+(?:blue|b\s*l\s*u\s*e)\b/i;
+      const match = text.match(wakePattern);
+
+      if (!match) {
+        return { detected: false, command: "" };
+      }
+
+      return {
+        detected: true,
+        command: text.slice(match.index + match[0].length).trim(),
+      };
+    };
+
+    const clearVoiceSilenceTimer = () => {
+      window.clearTimeout(voiceSilenceTimerRef.current);
+      voiceSilenceTimerRef.current = null;
+    };
+
+    const resetVoiceSilenceTimer = () => {
+      clearVoiceSilenceTimer();
+
+      if (!voiceWakeDetectedRef.current) return;
+
+      voiceSilenceTimerRef.current = window.setTimeout(() => {
+        const command = voiceCommandRef.current.trim();
+
+        if (command) {
+          shouldSubmitVoiceRef.current = true;
+          try {
+            recognitionRef.current?.stop();
+          } catch {
+            // Ignore recognition stop errors.
+          }
+        } else {
+          voiceWakeDetectedRef.current = false;
+          setVoiceAwake(false);
+          setInput("");
+        }
+      }, 750);
+    };
+
     useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -823,34 +882,103 @@ export default function AIAssistant() {
 
     recognition.onstart = () => {
       recognitionActiveRef.current = true;
-      setIsListening(true);
+      // Starting the browser recognition engine does NOT mean B.L.U.E. is
+      // awake. Keep the normal microphone button visible until the wake
+      // phrase is actually detected, or until the user manually clicks it.
+      setIsListening(
+        voiceManualModeRef.current || voiceWakeDetectedRef.current
+      );
       setIsStoppingVoice(false);
-      voiceTranscriptRef.current = "";
-      voiceLiveTranscriptRef.current = "";
     };
 
     recognition.onresult = (event) => {
-      let finalTranscript = voiceTranscriptRef.current;
-      let interimTranscript = "";
+      let fullTranscript = "";
 
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const transcript = event.results[index][0].transcript;
-
-        if (event.results[index].isFinal) {
-          finalTranscript += `${transcript} `;
-        } else {
-          interimTranscript += transcript;
-        }
+      for (let index = 0; index < event.results.length; index += 1) {
+        fullTranscript += `${event.results[index][0].transcript} `;
       }
 
-      voiceTranscriptRef.current = finalTranscript;
-      voiceLiveTranscriptRef.current = `${finalTranscript}${interimTranscript}`.trim();
-      setInput(voiceLiveTranscriptRef.current);
+      fullTranscript = fullTranscript.trim();
+      voiceLiveTranscriptRef.current = fullTranscript;
+
+      // When B.L.U.E. is not open, keep the microphone in low-interaction
+      // wake-word standby. Saying "Hey Blue" opens B.L.U.E. immediately.
+      if (!assistantOpenRef.current && !voiceManualModeRef.current) {
+        const wake = extractWakeCommand(fullTranscript);
+
+        if (!wake.detected) return;
+
+        const command = wake.command.trim();
+        voiceWakeDetectedRef.current = true;
+        voicePermissionGrantedRef.current = true;
+        setVoiceAwake(true);
+        setOpen(true);
+        setIsListening(true);
+        setShowTemplates(false);
+        voiceCommandRef.current = command;
+        setInput(command);
+        resetVoiceSilenceTimer();
+        return;
+      }
+
+      // Manual microphone mode bypasses the wake phrase completely.
+      // Clicking the mic means: start dictation immediately.
+      if (voiceManualModeRef.current) {
+        voiceWakeDetectedRef.current = true;
+        setVoiceAwake(true);
+        setIsListening(true);
+        setShowTemplates(false);
+        voiceCommandRef.current = fullTranscript.trim();
+        setInput(voiceCommandRef.current);
+        resetVoiceSilenceTimer();
+        return;
+      }
+
+      // Before the wake phrase, ignore normal speech completely.
+      // B.L.U.E. becomes active only after "Hey Blue" / "Hey, Blue" is heard.
+      if (!voiceWakeDetectedRef.current) {
+        const wake = extractWakeCommand(fullTranscript);
+
+        if (!wake.detected) return;
+
+        voiceWakeDetectedRef.current = true;
+        setVoiceAwake(true);
+        setIsListening(true);
+        setShowTemplates(false);
+
+        const command = wake.command.trim();
+        voiceCommandRef.current = command;
+        setInput(command);
+
+        resetVoiceSilenceTimer();
+        return;
+      }
+
+      // Once awake, keep only the command portion visible.
+      const wake = extractWakeCommand(fullTranscript);
+      const command = wake.detected
+        ? wake.command.trim()
+        : fullTranscript.trim();
+
+      voiceCommandRef.current = command;
+      setInput(command);
+      resetVoiceSilenceTimer();
     };
 
     recognition.onerror = (event) => {
       recognitionActiveRef.current = false;
       setIsStoppingVoice(false);
+
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        voicePermissionGrantedRef.current = false;
+        setVoiceSupported(false);
+        setIsListening(false);
+        setVoiceAwake(false);
+        voiceWakeDetectedRef.current = false;
+        clearVoiceSilenceTimer();
+        return;
+      }
+
       if (event.error !== "aborted") {
         setIsListening(false);
       }
@@ -858,25 +986,54 @@ export default function AIAssistant() {
 
     recognition.onend = () => {
       recognitionActiveRef.current = false;
-      setIsListening(false);
       setIsStoppingVoice(false);
+      clearVoiceSilenceTimer();
 
-      const transcript =
-        voiceTranscriptRef.current.trim() || voiceLiveTranscriptRef.current.trim();
+      const transcript = voiceCommandRef.current.trim();
+      const shouldSubmit = shouldSubmitVoiceRef.current;
 
-      if (shouldSubmitVoiceRef.current) {
-        shouldSubmitVoiceRef.current = false;
+      shouldSubmitVoiceRef.current = false;
+      setIsListening(false);
 
-        if (transcript) {
-          setInput("");
-          submitRef.current?.(transcript);
-        }
+      if (shouldSubmit && transcript) {
+        voiceWakeDetectedRef.current = false;
+        voiceManualModeRef.current = false;
+        setVoiceAwake(false);
+        voiceCommandRef.current = "";
+        voiceTranscriptRef.current = "";
+        voiceLiveTranscriptRef.current = "";
+        setInput("");
+        submitRef.current?.(transcript);
+        return;
+      }
+
+      // If the browser ends recognition unexpectedly, re-arm the wake-word
+      // listener while the assistant remains open.
+      if (
+        assistantOpenRef.current &&
+        voicePermissionGrantedRef.current &&
+        !typing
+      ) {
+        window.setTimeout(() => {
+          if (
+            assistantOpenRef.current &&
+            voicePermissionGrantedRef.current &&
+            !recognitionActiveRef.current
+          ) {
+            try {
+              recognition.start();
+            } catch {
+              // Browser may reject an immediate restart; the next interaction can retry.
+            }
+          }
+        }, 250);
       }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      clearVoiceSilenceTimer();
       shouldSubmitVoiceRef.current = false;
       recognitionActiveRef.current = false;
       recognition.onstart = null;
@@ -893,6 +1050,31 @@ export default function AIAssistant() {
       recognitionRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!open || typing || !voicePermissionGrantedRef.current) return undefined;
+    if (recognitionActiveRef.current || !recognitionRef.current) return undefined;
+
+    const timer = window.setTimeout(() => {
+      if (
+        assistantOpenRef.current &&
+        !typing &&
+        voicePermissionGrantedRef.current &&
+        !recognitionActiveRef.current
+      ) {
+        voiceWakeDetectedRef.current = false;
+        voiceCommandRef.current = "";
+        setVoiceAwake(false);
+        try {
+          recognitionRef.current.start();
+        } catch {
+          // Recognition can reject an immediate restart; the next result/click can retry.
+        }
+      }
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [open, typing]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return undefined;
@@ -992,19 +1174,33 @@ export default function AIAssistant() {
   }, [open]);
 
   useEffect(() => {
-    if (!open && recognitionRef.current) {
+    if (!open) {
       shouldSubmitVoiceRef.current = false;
-
-      recognitionActiveRef.current = false;
-      shouldSubmitVoiceRef.current = false;
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // Ignore cleanup errors.
-      }
-
-      setIsListening(false);
+      voiceWakeDetectedRef.current = false;
+      voiceManualModeRef.current = false;
+      voiceCommandRef.current = "";
+      clearVoiceSilenceTimer();
+      setVoiceAwake(false);
       setIsStoppingVoice(false);
+
+      // Keep the recognizer armed after microphone permission has been granted.
+      // This is what allows "Hey Blue" to wake B.L.U.E. without clicking the mic.
+      if (voicePermissionGrantedRef.current && recognitionRef.current && !recognitionActiveRef.current) {
+        window.setTimeout(() => {
+          if (
+            !assistantOpenRef.current &&
+            voicePermissionGrantedRef.current &&
+            recognitionRef.current &&
+            !recognitionActiveRef.current
+          ) {
+            try {
+              recognitionRef.current.start();
+            } catch {
+              // Browser may reject an immediate restart.
+            }
+          }
+        }, 150);
+      }
     }
   }, [open]);
 
@@ -1054,6 +1250,23 @@ export default function AIAssistant() {
 
     if (!question || typing) return;
 
+    clearVoiceSilenceTimer();
+    shouldSubmitVoiceRef.current = false;
+    voiceWakeDetectedRef.current = false;
+    voiceManualModeRef.current = false;
+    voiceCommandRef.current = "";
+    setVoiceAwake(false);
+
+    if (recognitionActiveRef.current) {
+      try {
+        recognitionRef.current?.abort();
+      } catch {
+        // Ignore recognition cleanup errors.
+      }
+      recognitionActiveRef.current = false;
+      setIsListening(false);
+    }
+
     setShowTemplates(false);
 
     setInput("");
@@ -1094,14 +1307,31 @@ export default function AIAssistant() {
       ]);
 
       setTyping(false);
-    }, 450);
+
+      // Re-arm wake-word listening as soon as the answer is ready.
+      if (voicePermissionGrantedRef.current && assistantOpenRef.current) {
+        window.setTimeout(() => {
+          if (
+            assistantOpenRef.current &&
+            voicePermissionGrantedRef.current &&
+            !recognitionActiveRef.current
+          ) {
+            try {
+              recognitionRef.current?.start();
+            } catch {
+              // Ignore browser restart races.
+            }
+          }
+        }, 120);
+      }
+    }, 0);
 
   };
 
   submitRef.current = submit;
 
-  const startListening = () => {
-    if (!voiceSupported || typing || isListening || recognitionActiveRef.current) return;
+  const startListening = (manual = false) => {
+    if (!voiceSupported || typing || recognitionActiveRef.current) return;
 
     const recognition = recognitionRef.current;
     if (!recognition) return;
@@ -1109,8 +1339,11 @@ export default function AIAssistant() {
     try {
       voiceTranscriptRef.current = "";
       voiceLiveTranscriptRef.current = "";
+      voiceCommandRef.current = "";
+      voiceWakeDetectedRef.current = false;
+      voiceManualModeRef.current = manual;
       shouldSubmitVoiceRef.current = false;
-      recognitionActiveRef.current = true;
+      setVoiceAwake(false);
       setIsStoppingVoice(false);
       setInput("");
       setShowTemplates(false);
@@ -1120,13 +1353,33 @@ export default function AIAssistant() {
     }
   };
 
+  const requestVoiceIntake = async () => {
+    if (!voiceSupported || typeof window === "undefined") return;
+
+    try {
+      if (navigator.mediaDevices?.getUserMedia && !voicePermissionGrantedRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+        voicePermissionGrantedRef.current = true;
+      }
+
+      if (!recognitionRef.current || recognitionActiveRef.current) return;
+
+      startListening(false);
+    } catch {
+      voicePermissionGrantedRef.current = false;
+      setVoiceSupported(false);
+    }
+  };
+
   const stopListening = () => {
     const recognition = recognitionRef.current;
 
     if (!recognition || isStoppingVoice || !recognitionActiveRef.current) return;
 
+    clearVoiceSilenceTimer();
     setIsStoppingVoice(true);
-    shouldSubmitVoiceRef.current = true;
+    shouldSubmitVoiceRef.current = !!voiceCommandRef.current.trim();
 
     try {
       recognition.stop();
@@ -1246,6 +1499,7 @@ export default function AIAssistant() {
       responseTimerRef.current && window.clearTimeout(responseTimerRef.current);
       focusTimerRef.current && window.clearTimeout(focusTimerRef.current);
       scrollStopTimerRef.current && window.clearTimeout(scrollStopTimerRef.current);
+      window.clearTimeout(voiceSilenceTimerRef.current);
       window.clearTimeout(speechHintTimerRef.current);
       speechRequestIdRef.current += 1;
       speechUtteranceRef.current = null;
@@ -1277,6 +1531,21 @@ export default function AIAssistant() {
     setSpeakingId(null);
     setSpeechPaused(false);
     setSpeechHintId(null);
+
+    clearVoiceSilenceTimer();
+    shouldSubmitVoiceRef.current = false;
+    voiceWakeDetectedRef.current = false;
+    voiceCommandRef.current = "";
+    setVoiceAwake(false);
+    if (recognitionActiveRef.current) {
+      try {
+        recognitionRef.current?.abort();
+      } catch {
+        // Ignore recognition cleanup errors.
+      }
+      recognitionActiveRef.current = false;
+      setIsListening(false);
+    }
 
     if (typing) return;
 
@@ -1336,6 +1605,21 @@ export default function AIAssistant() {
     setSpeakingId(null);
     setSpeechPaused(false);
     setSpeechHintId(null);
+
+    clearVoiceSilenceTimer();
+    shouldSubmitVoiceRef.current = false;
+    voiceWakeDetectedRef.current = false;
+    voiceCommandRef.current = "";
+    setVoiceAwake(false);
+    if (recognitionActiveRef.current) {
+      try {
+        recognitionRef.current?.abort();
+      } catch {
+        // Ignore recognition cleanup errors.
+      }
+      recognitionActiveRef.current = false;
+      setIsListening(false);
+    }
 
     if (typing) return;
 
@@ -1401,7 +1685,10 @@ export default function AIAssistant() {
 
           } ${isPageScrolling ? "dk-ai-scroll-hidden" : ""}`}
 
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            window.setTimeout(() => requestVoiceIntake(), 0);
+          }}
 
           aria-label="Open B.L.U.E. portfolio assistant"
 
@@ -1426,7 +1713,7 @@ export default function AIAssistant() {
 
           <span className="dk-ai-launcher-label">
 
-            Ask to B.L.U.E
+            Ask B.L.U.E.
 
           </span>
 
@@ -1804,8 +2091,8 @@ if (message.type === "conversation-end") {
                     className="dk-ai-voice-stop"
                     onClick={stopListening}
                     disabled={isStoppingVoice}
-                    aria-label="Pause listening and send question"
-                    title={isStoppingVoice ? "Stopping…" : "Click here to pause listening"}
+                    aria-label="Stop listening and send question"
+                    title={isStoppingVoice ? "Stopping…" : "Click here to send"}
                   >
                     <Pause size={14} fill="currentColor" />
                   </button>
@@ -1814,17 +2101,23 @@ if (message.type === "conversation-end") {
                 <>
                   <button
                     type="button"
-                    className="dk-ai-mic"
-                    onClick={startListening}
+                    className={`dk-ai-mic ${
+                      isListening ? "armed" : ""
+                    }`}
+                    onClick={() => startListening(true)}
                     disabled={!voiceSupported || typing}
                     aria-label={
                       voiceSupported
-                        ? "Speak to B.L.U.E."
+                        ? isListening
+                          ? "Listening for Hey B.L.U.E."
+                          : "Speak to B.L.U.E."
                         : "Voice input is not supported in this browser"
                     }
                     title={
                       voiceSupported
-                        ? "Speak to B.L.U.E."
+                        ? isListening
+                          ? "Listening for Hey B.L.U.E."
+                          : "Speak to B.L.U.E."
                         : "Voice input is not supported in this browser"
                     }
                   >
@@ -1839,7 +2132,7 @@ if (message.type === "conversation-end") {
                       setInput(event.target.value)
                     }
                     onKeyDown={onKeyDown}
-                    placeholder="Ask B.L.U.E. about Deepshik..."
+                    placeholder={isListening ? "Say Hey B.L.U.E. to speak..." : "Ask B.L.U.E. about Deepshik..."}
                     rows={1}
                     aria-label="Ask B.L.U.E."
                   />
