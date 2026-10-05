@@ -667,6 +667,7 @@ export default function AIAssistant() {
   const [input, setInput] = useState("");
 
   const [showTemplates, setShowTemplates] = useState(true);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
 
   const [messages, setMessages] = useState([
 
@@ -1280,6 +1281,7 @@ export default function AIAssistant() {
     if (typing) return;
 
     setShowTemplates(true);
+    setShowAllTemplates(false);
 
     setInput("");
 
@@ -1338,6 +1340,7 @@ export default function AIAssistant() {
     if (typing) return;
 
     setShowTemplates(true);
+    setShowAllTemplates(false);
 
     setInput("");
 
@@ -1661,7 +1664,10 @@ if (message.type === "conversation-end") {
 
               <div className="dk-ai-quick">
 
-                {QUICK_PROMPTS.map((prompt) => (
+                {(showAllTemplates
+                  ? QUICK_PROMPTS
+                  : QUICK_PROMPTS.slice(0, 5)
+                ).map((prompt) => (
 
                   <button
 
@@ -1678,6 +1684,22 @@ if (message.type === "conversation-end") {
                   </button>
 
                 ))}
+
+                {QUICK_PROMPTS.length > 5 && (
+
+                  <button
+
+                    type="button"
+
+                    onClick={() => setShowAllTemplates((visible) => !visible)}
+
+                  >
+
+                    {showAllTemplates ? "Show less" : "More"}
+
+                  </button>
+
+                )}
 
               </div>
 
