@@ -4819,6 +4819,12 @@ export default function Portfolio() {
           will-change: transform;
         }
 
+        /* Animate the name automatically when the hero loads.
+           Hovering the name still triggers the same wave again. */
+        .hero-main-text.is-auto > span {
+          animation: waveChar 0.6s ease-in-out;
+        }
+
         .hero-main-text:hover > span {
           animation: waveChar 0.6s ease-in-out;
         }
@@ -10325,7 +10331,7 @@ export default function Portfolio() {
               I am{" "}
 
               <span
-                className="hero-main-text"
+                className="hero-main-text is-auto"
                 style={{
                   fontStyle: "italic",
                 }}
