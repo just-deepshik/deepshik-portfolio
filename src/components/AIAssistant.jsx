@@ -34,18 +34,70 @@ import { portfolioKnowledge } from "../data/portfolioKnowledge";
 
 const QUICK_PROMPTS = [
 
-  "Tell me about Deepshik",
+  // About Deepshik
+  "Who is Deepshik?",
+  "What does Deepshik do?",
+  "What is Deepshik's role?",
+  "What does his portfolio focus on?",
 
-  "What are his main skills?",
+  // Education
+  "What is Deepshik's education?",
+  "Where did Deepshik study?",
+  "What degree does he have?",
+  "What did he study?",
 
-  "Show me his data engineering work",
+  // Skills
+  "What are Deepshik's skills?",
+  "What is his tech stack?",
+  "What are his data engineering skills?",
+  "What programming languages does he know?",
+  "What tools and technologies does he use?",
 
-  "Tell me about the IoT project",
+  // Experience
+  "What is Deepshik's work experience?",
+  "Where did he intern?",
+  "What did he do at EvoAstra?",
+  "Tell me about his Captionize internship project.",
+
+  // Projects
+  "What projects has Deepshik built?",
+  "Tell me about the IoT project.",
+  "What datasets were used in the IoT project?",
+  "What methods were used in the IoT project?",
+  "How was the IoT project deployed?",
+  "Tell me about the CAC Data Engineering Platform.",
+  "What is the CAC project pipeline?",
+  "What technologies does the CAC project use?",
+  "Tell me about Captionize.",
+  "What technologies does Captionize use?",
+  "Tell me about NAV-Aisle Superstore.",
+  "What does NAV-Aisle do?",
+
+  // Research
+  "Tell me about Deepshik's research paper.",
+  "What is the IoT research about?",
+  "What are SHAP, FGSM and PGD used for?",
+  "Where was the research presented?",
+
+  // Certifications
+  "What certifications does Deepshik have?",
+  "What Snowflake workshops has he completed?",
+  "Does he have an AI certification?",
+
+  // Achievements
+  "What are Deepshik's achievements?",
+  "What awards has he won?",
+  "Tell me about his filmmaking achievements.",
+
+  // Portfolio overview
+  "What are Deepshik's main focus areas?",
+  "What kinds of projects has he worked on?",
+  "What are his core technologies?",
 
 ];
 
 function normalize(text = "") {
-  return String(text)
+  return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, " ")
     .replace(/\s+/g, " ")
@@ -53,7 +105,9 @@ function normalize(text = "") {
 }
 
 function tokenize(text = "") {
-  return normalize(text).split(" ").filter(Boolean);
+  return normalize(text)
+    .split(" ")
+    .filter(Boolean);
 }
 
 function scoreMatch(question, candidates = []) {
@@ -65,13 +119,14 @@ function scoreMatch(question, candidates = []) {
     const normalizedCandidate = normalize(candidate);
     if (!normalizedCandidate) continue;
 
-    if (q === normalizedCandidate) score += 100;
     if (q.includes(normalizedCandidate)) {
       score += normalizedCandidate.split(" ").length * 8;
     }
 
     for (const token of tokenize(normalizedCandidate)) {
-      if (qTokens.has(token)) score += token.length >= 4 ? 2 : 1;
+      if (qTokens.has(token)) {
+        score += token.length >= 4 ? 2 : 1;
+      }
     }
   }
 
@@ -87,116 +142,127 @@ function getProjectSearchText(project) {
     project?.type,
     project?.description,
     project?.purpose,
-    project?.deployment,
-    project?.publication,
     ...(project?.technologies || []),
     ...(project?.datasets || []),
     ...(project?.methods || []),
     ...(project?.capabilities || []),
     ...(project?.pipeline || []),
     ...(project?.keywords || []),
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
-function getQueryMapCandidates(category) {
-  return portfolioKnowledge?.queryMap?.[category] || [];
-}
-
-function findBestProject(question, preferredProjectId = null) {
+function findBestProject(question) {
   const projects = portfolioKnowledge.projects || [];
   if (!projects.length) return null;
 
   const q = normalize(question);
 
-  if (preferredProjectId) {
-    const contextual = projects.find((project) => project.id === preferredProjectId);
-    if (contextual) {
-      const contextualWords = [
-        "this project", "that project", "this", "that",
-        "it", "the project", "its", "it use", "it used",
-        "what about it", "tell me more"
-      ];
-      if (contextualWords.some((phrase) => q.includes(phrase))) {
-        return contextual;
-      }
-    }
-  }
+  // Require a project-specific identifier. The generic word "project" is
+  // intentionally not enough because many non-project questions contain it.
+  const specificAnchors = [
+    "captionize",
+    "nav-aisle", "nav aisle", "superstore",
+    "iot", "iot ids", "beyond accuracy", "ton-iot", "bot-iot",
+    "cac", "customer acquisition cost", "data engineering platform",
+    "image caption", "intrusion detection", "retail navigation",
+    "indoor navigation"
+  ];
 
-  const categoryScores = Object.entries(portfolioKnowledge.queryMap || {})
-    .filter(([category]) => projects.some((project) => {
-      if (category === "iot") return project.id === "iot-ids";
-      if (category === "cac") return project.id === "cac-data-engineering";
-      if (category === "captionize") return project.id === "captionize";
-      if (category === "navAisle") return project.id === "nav-aisle";
-      return false;
-    }))
-    .map(([category, phrases]) => ({
-      category,
-      score: scoreMatch(question, phrases),
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const categoryToId = {
-    iot: "iot-ids",
-    cac: "cac-data-engineering",
-    captionize: "captionize",
-    navAisle: "nav-aisle",
-  };
-
-  if (categoryScores[0]?.score > 0) {
-    const project = projects.find(
-      (item) => item.id === categoryToId[categoryScores[0].category]
-    );
-    if (project) return project;
+  if (!specificAnchors.some((anchor) => q.includes(normalize(anchor)))) {
+    return null;
   }
 
   const scored = projects
     .map((project) => ({
       project,
       score: scoreMatch(question, [
+        project.id,
         project.name,
         project.fullTitle,
         project.tag,
         project.type,
-        project.description,
-        project.purpose,
-        project.deployment,
-        project.publication,
-        ...(project.technologies || []),
-        ...(project.datasets || []),
-        ...(project.methods || []),
-        ...(project.capabilities || []),
-        ...(project.pipeline || []),
         ...(project.keywords || []),
-        getProjectSearchText(project),
       ]),
     }))
     .sort((a, b) => b.score - a.score);
 
-  return scored[0]?.score >= 5 ? scored[0].project : null;
+  return scored[0]?.score >= 3 ? scored[0].project : null;
 }
 
 function detectIntent(question) {
   const q = normalize(question);
 
-  const categories = [
-    "identity",
-    "education",
-    "skills",
-    "experience",
-    "projects",
-    "certifications",
-    "achievements",
-  ];
+  // Specific intents are deliberately checked before broad intents.
+  // This prevents words such as "project", "technology", "work", or
+  // "research" from accidentally routing a project question to identity.
+  const intents = {
+    education: [
+      "education", "degree", "college", "university", "studied", "study",
+      "btech", "b tech", "computer science", "data science", "graduation",
+      "academic background", "where did he study", "where did deepshik study",
+      "what did he study", "which college", "which university"
+    ],
+    certifications: [
+      "certification", "certifications", "certificate", "certificates",
+      "snowflake badge", "snowflake certification", "workshop", "workshops"
+    ],
+    achievements: [
+      "achievement", "achievements", "award", "awards", "won", "filmmaker",
+      "short film", "techknowthon", "cinematica"
+    ],
+    experience: [
+      "experience", "work experience", "professional experience", "internship",
+      "intern", "worked at", "work history", "company", "companies", "evoastra",
+      "responsibilities", "where did he work", "where has he worked"
+    ],
+    research: [
+      "research paper", "research", "publication", "published", "iot research", "where was the research presented",
+      "intrusion detection", "concept drift", "adversarial attacks", "shap",
+      "fgsm", "pgd"
+    ],
+    projects: [
+      "projects", "project", "portfolio projects", "what has he built",
+      "what did he build", "his work", "show me his work", "what projects has he done"
+    ],
+    skills: [
+      "skills", "technical skills", "tech stack", "programming languages",
+      "tools", "what can he work with", "what technologies does he know",
+      "what are his skills", "data engineering skills"
+    ],
+    portfolio: [
+      "main focus areas", "focus areas", "focus on", "portfolio focus",
+      "kinds of projects", "types of projects", "project areas",
+      "core technologies", "core technology", "portfolio overview",
+      "what does the portfolio focus on", "what is the portfolio about"
+    ],
+    contact: [
+      "contact", "email", "reach", "reach him", "get in touch", "social media",
+      "linkedin", "github"
+    ],
+    identity: [
+      "who is deepshik", "who is deepshik kodam", "who is he",
+      "tell me about deepshik", "tell me about him", "about deepshik",
+      "about him", "what does deepshik do", "what does he do", "what is his role",
+      "what kind of engineer", "what is deepshik s role", "person behind this portfolio"
+    ]
+  };
 
   let bestIntent = "unknown";
   let bestScore = 0;
 
-  for (const intent of categories) {
-    const score = scoreMatch(question, [
-      ...getQueryMapCandidates(intent),
-      ...(portfolioKnowledge?.[intent]?.keywords || []),
-    ]);
+  for (const [intent, keywords] of Object.entries(intents)) {
+    let score = 0;
+
+    for (const keyword of keywords) {
+      const k = normalize(keyword);
+      if (!k) continue;
+
+      // Exact phrase matches are much stronger than individual word overlap.
+      if (q === k) score += 100;
+      else if (q.includes(k)) score += k.split(" ").length * 12;
+    }
 
     if (score > bestScore) {
       bestScore = score;
@@ -204,195 +270,12 @@ function detectIntent(question) {
     }
   }
 
-  const researchScore = scoreMatch(question, [
-    ...getQueryMapCandidates("iot"),
-    ...(portfolioKnowledge?.research?.keywords || []),
-    "research",
-    "paper",
-    "publication",
-    "dataset",
-    "method",
-    "deployment",
-  ]);
-
-  if (researchScore > bestScore) {
-    bestIntent = "research";
-    bestScore = researchScore;
-  }
-
-  if (scoreMatch(question, ["contact", "email", "reach", "get in touch", "linkedin", "github"]) > bestScore) {
-    bestIntent = "contact";
-    bestScore = scoreMatch(question, ["contact", "email", "reach", "get in touch", "linkedin", "github"]);
-  }
-
-  if (scoreMatch(question, [
-    "complete overview",
-    "everything about him",
-    "tell me everything",
-    "full profile",
-    "complete profile",
-    "portfolio overview",
-    "all about deepshik",
-  ]) > bestScore) {
-    bestIntent = "overview";
-  }
-
-  // Prevent a generic word such as "project" from winning over a
-  // clearly project-specific query.
-  if (q.includes("project") && bestScore < 10) bestIntent = "projects";
-
   return bestIntent;
 }
 
-function isFollowUpQuestion(question) {
-  const q = normalize(question);
-  return [
-    "this", "that", "it", "its", "he", "his", "they", "them",
-    "what about", "and what", "how about", "tell me more",
-    "more about it", "what did he use", "what technologies did he use",
-    "what dataset did he use", "which dataset", "what tools did he use",
-    "where can i see it", "show me it", "show it"
-  ].some((phrase) => q === phrase || q.startsWith(`${phrase} `) || q.includes(` ${phrase} `));
-}
-
-function getContextProject(history = []) {
-  const recentAssistantMessages = [...history]
-    .reverse()
-    .filter((message) => message?.role === "assistant");
-
-  for (const message of recentAssistantMessages) {
-    if (message.projectId) {
-      return portfolioKnowledge.projects?.find(
-        (project) => project.id === message.projectId
-      ) || null;
-    }
-    if (message.source) {
-      const sourceMatch = portfolioKnowledge.projects?.find(
-        (project) => project.name === message.source
-      );
-      if (sourceMatch) return sourceMatch;
-    }
-  }
-
-  return null;
-}
-
-function formatList(items = []) {
-  return items.filter(Boolean).join(", ");
-}
-
-function getProjectAnswer(question, project) {
-  if (!project) return null;
-
+function getLocalAnswer(question) {
   const q = normalize(question);
 
-  const asksTech = [
-    "technology", "technologies", "tech", "stack", "tools",
-    "built with", "built using", "used", "use", "framework",
-    "library", "libraries"
-  ].some((word) => q.includes(word));
-
-  const asksDataset = [
-    "dataset", "datasets", "data used", "trained on",
-    "training data", "data set"
-  ].some((word) => q.includes(word));
-
-  const asksPurpose = [
-    "why", "purpose", "what is it", "what does it do",
-    "what is the project", "explain", "what does this do"
-  ].some((word) => q.includes(word));
-
-  const asksPipeline = [
-    "pipeline", "flow", "architecture", "process", "raw",
-    "staging", "analytics", "etl", "ingestion", "transformation"
-  ].some((word) => q.includes(word));
-
-  const asksMethods = [
-    "method", "methods", "algorithm", "model", "approach",
-    "attack", "explainability", "robustness"
-  ].some((word) => q.includes(word));
-
-  const asksCapabilities = [
-    "feature", "features", "capability", "capabilities",
-    "can it", "does it support", "what can it do"
-  ].some((word) => q.includes(word));
-
-  const asksDeployment = [
-    "deploy", "deployment", "live", "api", "swagger"
-  ].some((word) => q.includes(word));
-
-  const asksPublication = [
-    "publication", "published", "paper", "presented",
-    "springer", "ict4sd"
-  ].some((word) => q.includes(word));
-
-  const asksLink = [
-    "link", "github", "repo", "repository", "source code",
-    "see it", "view it", "open it"
-  ].some((word) => q.includes(word));
-
-  let text = "";
-
-  if (asksLink && project.url) {
-    text = `${project.name} is available here: ${project.url}`;
-  } else if (asksDataset && project.datasets?.length) {
-    text = `${project.name} used: ${formatList(project.datasets)}.`;
-  } else if (asksMethods && project.methods?.length) {
-    text = `${project.name} uses these methods/models: ${formatList(project.methods)}.`;
-  } else if (asksTech && project.technologies?.length) {
-    text = `${project.name} uses: ${formatList(project.technologies)}.`;
-  } else if (asksPipeline && project.pipeline?.length) {
-    text = `${project.name}'s pipeline is: ${project.pipeline.join(" → ")}.`;
-  } else if (asksCapabilities && project.capabilities?.length) {
-    text = `${project.name} supports: ${formatList(project.capabilities)}`;
-  } else if (asksDeployment && project.deployment) {
-    text = `${project.name}: ${project.deployment}`;
-  } else if (asksPublication && project.publication) {
-    text = `${project.name}: ${project.publication}`;
-  } else if (asksPurpose && project.purpose) {
-    text = `${project.name}: ${project.purpose}`;
-  } else {
-    text = `${project.name}: ${project.description || project.purpose || ""}`;
-
-    if (project.technologies?.length) {
-      text += ` Technologies include ${formatList(project.technologies)}.`;
-    }
-  }
-
-  return {
-    text,
-    source: project.name,
-    link: project.url && project.url !== "#" ? project.url : null,
-    section: project.section,
-    projectId: project.id,
-  };
-}
-
-function getOverviewAnswer() {
-  const { identity, education, portfolio, skills, experience, projects, certifications, achievements } =
-    portfolioKnowledge;
-
-  const experienceText = experience?.length
-    ? experience.map((item) => `${item.role} at ${item.company}`).join("; ")
-    : "the portfolio's listed experience";
-
-  return {
-    text:
-      `${identity.name} is a ${identity.role} based in ${identity.location}. ` +
-      `${identity.summary || portfolio?.focusAreas?.join(", ")} ` +
-      `He studied ${education.degree} in ${education.field} at ${education.institution} (${education.period}). ` +
-      `His portfolio covers ${formatList(portfolio.focusAreas)}. ` +
-      `It currently lists ${projects?.length || 0} featured projects, ` +
-      `${experienceText}, ${certifications?.length || 0} certifications/workshops, ` +
-      `and ${achievements?.length || 0} listed achievements. ` +
-      `His core technologies include ${formatList(portfolio.coreTechnologies || skills)}.`,
-    source: "Portfolio Overview",
-    section: "about",
-  };
-}
-
-function getLocalAnswer(question, history = []) {
-  const q = normalize(question);
   const {
     identity,
     about,
@@ -407,226 +290,372 @@ function getLocalAnswer(question, history = []) {
     portfolio,
   } = portfolioKnowledge;
 
-  const contextualProject = getContextProject(history);
-  const project = findBestProject(question, contextualProject?.id);
-
-  // Follow-up questions inherit the most recent project context.
-  if (contextualProject && isFollowUpQuestion(question)) {
-    const contextualAnswer = getProjectAnswer(question, contextualProject);
-    if (contextualAnswer) return contextualAnswer;
-  }
-
   const intent = detectIntent(question);
 
-  if (intent === "overview") return getOverviewAnswer();
+  // Explicit research wording should never be swallowed by the broad
+  // identity intent (for example, "Tell me about Deepshik's research paper").
+  const asksAboutResearch = [
+    "research paper", "research publication", "iot research",
+    "tell me about deepshik s research", "research presented",
+    "where was the research presented"
+  ].some((phrase) => q.includes(phrase));
 
+  if (asksAboutResearch && !["projects", "skills", "certifications", "achievements", "experience"].includes(intent)) {
+    const datasets = research?.datasets?.join(" and ") || "the listed datasets";
+    const methods = research?.methods?.join(", ") || "the listed methods";
+
+    return {
+      text: `${research.title}. The research uses the ${datasets} datasets and includes ${methods}. ${research.publication} ${research.deployment}`,
+      source: "Research",
+      section: "work",
+      link: projects.find((project) => project.id === "iot-ids")?.url || null,
+    };
+  }
+
+  // DIRECT PORTFOLIO-OVERVIEW QUESTIONS
+  if (intent === "portfolio") {
+    const qFocus = ["focus", "focus areas", "main focus", "portfolio focus"].some((x) => q.includes(x));
+    const qProjectAreas = ["kinds of projects", "types of projects", "project areas", "what projects", "areas has he worked"].some((x) => q.includes(x));
+    const qCoreTech = ["core technologies", "core technology"].some((x) => q.includes(x));
+
+    if (qFocus) {
+      return {
+        text: `${identity.name}'s main focus areas are: ${portfolio.focusAreas.join(", ")}.`,
+        source: "Portfolio Overview",
+        section: "about",
+      };
+    }
+
+    if (qCoreTech) {
+      return {
+        text: `${identity.name}'s core technologies are: ${portfolio.coreTechnologies.join(", ")}.`,
+        source: "Portfolio Overview",
+        section: "skills",
+      };
+    }
+
+    if (qProjectAreas) {
+      return {
+        text: `${identity.name} has worked across: ${portfolio.projectAreas.join(", ")}.`,
+        source: "Portfolio Overview",
+        section: "work",
+      };
+    }
+  }
+
+  // DIRECT RESEARCH-QUESTION HANDLERS
+  if (intent === "research") {
+    const asksMethods = ["shap", "fgsm", "pgd"].some((x) => q.includes(x)) &&
+      ["used for", "use", "what are", "what is", "purpose", "why"].some((x) => q.includes(x));
+    const asksPresentation = ["where was", "presented", "presentation", "conference", "ict4sd"].some((x) => q.includes(x));
+
+    if (asksMethods) {
+      return {
+        text: `The research uses MLP, SHAP, FGSM, PGD, and concept drift. SHAP is used for explainability, while FGSM and PGD are used for adversarial attack evaluation; MLP is the machine-learning model, and concept drift addresses changes in data behavior over time.`,
+        source: "Research",
+        section: "work",
+        link: projects.find((project) => project.id === "iot-ids")?.url || null,
+      };
+    }
+
+    if (asksPresentation) {
+      return {
+        text: `The research was presented at ICT4SD 2026 (Goa). It was also accepted for Springer Nature conference proceedings.`,
+        source: "Research",
+        section: "work",
+        link: projects.find((project) => project.id === "iot-ids")?.url || null,
+      };
+    }
+  }
+
+  // PROJECT-SPECIFIC QUESTIONS MUST WIN over generic intents.
+  // Example: "What technologies does Captionize use?" should resolve to
+  // Captionize, not to the generic skills/about response.
+  const project = ["skills", "certifications", "achievements", "experience"].includes(intent) ? null : findBestProject(question);
+
+  if (project) {
+    const qHasTech = [
+      "technology", "technologies", "tech", "stack", "tools", "built with", "used", "use"
+    ].some((word) => q.includes(word));
+
+    const qHasDataset = [
+      "dataset", "datasets", "data used", "trained on", "training data"
+    ].some((word) => q.includes(word));
+
+    const qHasPurpose = [
+      "why", "purpose", "what is it", "what does it do", "what is the project", "explain", "about"
+    ].some((word) => q.includes(word));
+
+    const qHasPipeline = [
+      "pipeline", "flow", "architecture", "process", "raw", "staging", "analytics"
+    ].some((word) => q.includes(word));
+
+    const qHasMethods = [
+      "method", "methods", "approach", "technique", "techniques", "model"
+    ].some((word) => q.includes(word));
+
+    const qHasCapabilities = [
+      "capability", "capabilities", "feature", "features", "can it", "does it"
+    ].some((word) => q.includes(word));
+
+    const qHasDeployment = [
+      "deployment", "deployed", "deploy", "api", "swagger", "live"
+    ].some((word) => q.includes(word));
+
+    const qHasPublication = [
+      "publication", "published", "presented", "paper", "springer", "ict4sd"
+    ].some((word) => q.includes(word));
+
+    const qHasLink = [
+      "github", "repo", "repository", "link", "source code", "see the project"
+    ].some((word) => q.includes(word));
+
+    let text = "";
+
+    if (qHasDataset && project.datasets?.length) {
+      text = `${project.name} used the following datasets: ${project.datasets.join(", ")}.`;
+    } else if (qHasMethods && project.methods?.length) {
+      text = `${project.name} uses these methods: ${project.methods.join(", ")}.`;
+    } else if (qHasTech && project.technologies?.length) {
+      text = `${project.name} uses: ${project.technologies.join(", ")}.`;
+    } else if (qHasPipeline && project.pipeline?.length) {
+      text = `${project.name}'s pipeline is: ${project.pipeline.join(" → ")}.`;
+    } else if (qHasDeployment && project.deployment) {
+      text = `${project.name}: ${project.deployment}`;
+    } else if (qHasPublication && project.id === "iot-ids") {
+      text = `${project.name}: ${project.publication}`;
+    } else if (qHasCapabilities && project.capabilities?.length) {
+      text = `${project.name} includes:
+
+${project.capabilities.map((item) => `• ${item}`).join("\n")}`;
+    } else if (qHasLink && project.url && project.url !== "#") {
+      text = `${project.name}: ${project.url}`;
+    } else if (qHasPurpose && project.purpose) {
+      text = `${project.name}: ${project.purpose}`;
+    } else {
+      text = `${project.name}: ${project.description}`;
+    }
+
+    return {
+      text,
+      source: project.name,
+      link: project.url,
+      section: project.section,
+    };
+  }
+
+  // IDENTITY / ABOUT
   if (intent === "identity") {
     return {
       text:
         `${identity.name} is a ${identity.role} based in ${identity.location}. ` +
-        `${identity.summary || about.summary} ` +
-        `His portfolio focuses on ${formatList(portfolio.focusAreas?.slice(0, 6))}.`,
+        `${identity.tagline} ` +
+        `${about.focus}`,
       source: "About",
       section: "about",
     };
   }
 
+  // EDUCATION
   if (intent === "education") {
     return {
       text:
-        `${identity.name} completed a ${education.degree} in ${education.field} ` +
-        `at ${education.institution} (${education.period}).`,
+        `${identity.name} completed a ${education.degree} in ` +
+        `${education.field} at ${education.institution} ` +
+        `(${education.period}).`,
       source: "Education",
       section: "education",
     };
   }
 
+  // SKILLS
   if (intent === "skills") {
-    const categoryLabels = [
-      ["Programming", skillsByCategory?.programming],
-      ["Data", skillsByCategory?.data],
-      ["Data Engineering", skillsByCategory?.dataEngineering],
-      ["Analytics", skillsByCategory?.analytics],
-      ["Development", skillsByCategory?.development],
-      ["Version control", skillsByCategory?.versionControl],
-    ];
+    const programming =
+      skillsByCategory?.programming?.length
+        ? skillsByCategory.programming.join(", ")
+        : "";
 
-    const parts = categoryLabels
-      .filter(([, values]) => values?.length)
-      .map(([label, values]) => `${label}: ${formatList(values)}`);
+    const dataEngineering =
+      skillsByCategory?.dataEngineering?.length
+        ? skillsByCategory.dataEngineering.join(", ")
+        : "";
+
+    const development =
+      skillsByCategory?.development?.length
+        ? skillsByCategory.development.join(", ")
+        : "";
+
+    const analytics =
+      skillsByCategory?.analytics?.length
+        ? skillsByCategory.analytics.join(", ")
+        : "";
+
+    const parts = [];
+
+    if (programming) {
+      parts.push(`Programming: ${programming}`);
+    }
+
+    if (dataEngineering) {
+      parts.push(`Data & data engineering: ${dataEngineering}`);
+    }
+
+    if (analytics) {
+      parts.push(`Analytics: ${analytics}`);
+    }
+
+    if (development) {
+      parts.push(`Development: ${development}`);
+    }
+
+    if (!parts.length) {
+      parts.push(`His skills include ${skills.join(", ")}.`);
+    }
 
     return {
-      text: `${identity.name}'s technical toolkit includes:\n\n${parts.join("\n") || formatList(skills)}.`,
+      text: `${identity.name}'s technical toolkit includes:\n\n${parts.join(
+        "\n"
+      )}`,
       source: "Tools & Skills",
       section: "skills",
     };
   }
 
+  // EXPERIENCE
   if (intent === "experience") {
     if (!experience?.length) {
       return {
-        text: "The portfolio knowledge base does not currently contain detailed professional experience.",
+        text:
+          "I don't currently have detailed professional experience information in Deepshik's portfolio knowledge base.",
         source: "Experience",
-        section: "experience",
       };
     }
 
-    const text = experience.map((job) => {
-      const responsibilities = job.responsibilities?.length
-        ? ` Responsibilities: ${formatList(job.responsibilities)}`
-        : "";
-      return `${job.role} at ${job.company} (${job.period}). ${job.description}${responsibilities}`;
-    }).join("\n\n");
+    const job = experience[0];
 
     return {
-      text,
+      text:
+        `${job.role} at ${job.company} (${job.period}). ` +
+        `${job.description}`,
       source: "Experience",
       section: "experience",
     };
   }
 
+  // CERTIFICATIONS
   if (intent === "certifications") {
     if (!certifications?.length) {
       return {
-        text: "The portfolio knowledge base does not currently contain certification information.",
+        text:
+          "I don't currently have certification information in Deepshik's portfolio knowledge base.",
         source: "Certifications",
-        section: "certifications",
       };
     }
 
-    const certificationText = certifications.map((cert, index) => {
-      const name = typeof cert === "string" ? cert : cert.name;
-      const provider = typeof cert === "object" && cert.provider ? ` — ${cert.provider}` : "";
-      const date = typeof cert === "object" && cert.date ? ` (${cert.date})` : "";
-      return `${index + 1}. ${name}${provider}${date}`;
-    }).join("\n");
+    const certificationText = certifications
+      .map((cert, index) => {
+        if (typeof cert === "string") {
+          return `${index + 1}. ${cert}`;
+        }
+
+        return `${index + 1}. ${cert.name}${
+          cert.provider ? ` — ${cert.provider}` : ""
+        }${cert.date ? ` (${cert.date})` : ""}`;
+      })
+      .join("\n");
 
     return {
-      text: `${identity.name}'s portfolio lists ${certifications.length} certifications/workshops:\n\n${certificationText}`,
+      text:
+        `${identity.name}'s portfolio lists ${certifications.length} ` +
+        `certifications/workshops:\n\n${certificationText}`,
       source: "Certifications",
       section: "certifications",
     };
   }
 
+  // ACHIEVEMENTS
   if (intent === "achievements") {
     if (!achievements?.length) {
       return {
-        text: "The portfolio knowledge base does not currently contain achievement information.",
+        text:
+          "I don't currently have achievement information in Deepshik's portfolio knowledge base.",
         source: "Achievements",
-        section: "achievements",
       };
     }
 
-    const achievementText = achievements.map((achievement, index) =>
-      `${index + 1}. ${achievement.title || achievement.description}: ${achievement.description || ""}`
-    ).join("\n");
+    const achievementText = achievements
+      .map((achievement, index) => {
+        if (typeof achievement === "string") {
+          return `${index + 1}. ${achievement}`;
+        }
+
+        return `${index + 1}. ${
+          achievement.description || achievement.title
+        }`;
+      })
+      .join("\n");
 
     return {
-      text: `${identity.name}'s listed achievements include:\n\n${achievementText}`,
+      text:
+        `${identity.name}'s listed achievements include:\n\n${achievementText}`,
       source: "Achievements",
+      section: "achievements",
     };
   }
 
+  // RESEARCH
   if (intent === "research") {
-    const datasets = research?.datasets?.length ? formatList(research.datasets) : "the listed datasets";
-    const methods = research?.methods?.length ? formatList(research.methods) : "the listed methods";
+    const datasets =
+      research?.datasets?.join(" and ") || "the listed datasets";
+
+    const methods =
+      research?.methods?.join(", ") || "the listed methods";
 
     return {
       text:
         `${research.title}. ` +
-        `The research uses ${datasets} and includes ${methods}. ` +
-        `${research.publication} ${research.deployment}`,
+        `The research uses the ${datasets} datasets and includes ` +
+        `${methods}. ` +
+        `${research.publication} ` +
+        `${research.deployment}`,
       source: "Research",
       section: "work",
-      link: projects.find((item) => item.id === "iot-ids")?.url || null,
-      projectId: "iot-ids",
+      link:
+        projects.find((project) => project.id === "iot-ids")?.url || null,
     };
   }
 
-  if (project) {
-    return getProjectAnswer(question, project);
-  }
 
+  // GENERAL PROJECT LIST
   if (intent === "projects") {
     return {
       text:
         `Deepshik currently has ${projects.length} featured projects:\n\n` +
-        projects.map((item, index) => `${index + 1}. ${item.name} — ${item.description}`).join("\n\n") +
-        `\n\nAsk me about a specific project and I can explain its purpose, technologies, data, methods, capabilities, pipeline, deployment, or link.`,
+        projects
+          .map((project, index) => `${index + 1}. ${project.name}`)
+          .join("\n") +
+        `\n\nAsk me about any specific project and I can explain it.`,
       source: "Selected Work",
       section: "work",
     };
   }
 
+  // CONTACT
   if (intent === "contact") {
     return {
       text:
-        "The knowledge base does not contain a specific email address or social URL. " +
-        "You can use the portfolio's Get in touch/contact area or its social links in the footer to reach Deepshik.",
+        "You can use the portfolio's Get in touch/contact area or the social links in the footer to reach Deepshik.",
       source: "Contact",
     };
   }
 
-  // A final knowledge-base-only retrieval pass. This lets B.L.U.E. answer
-  // questions about fields that do not have a dedicated intent without
-  // inventing information.
-  const searchableEntries = [
-    ["Identity", identity],
-    ["About", about],
-    ["Education", education],
-    ["Skills", skills],
-    ["Experience", experience],
-    ["Research", research],
-    ["Certifications", certifications],
-    ["Achievements", achievements],
-    ["Portfolio", portfolio],
-    ["Projects", projects],
-  ];
-
-  let bestEntry = null;
-  let bestScore = 0;
-
-  for (const [source, data] of searchableEntries) {
-    const serialized = JSON.stringify(data);
-    const score = scoreMatch(question, [
-      source,
-      ...(data?.keywords || []),
-      serialized,
-    ]);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestEntry = { source, data };
-    }
-  }
-
-  if (bestEntry && bestScore >= 6) {
-    const data = bestEntry.data;
-    if (Array.isArray(data)) {
-      return {
-        text: `${bestEntry.source} information in the portfolio knowledge base:\n\n` +
-          data.map((item, index) =>
-            `${index + 1}. ${typeof item === "string" ? item : item.name || item.title || item.description || JSON.stringify(item)}`
-          ).join("\n"),
-        source: bestEntry.source,
-      };
-    }
-
-    return {
-      text: `${bestEntry.source} information available in the portfolio knowledge base: ` +
-        Object.entries(data || {})
-          .filter(([key, value]) => !["keywords"].includes(key) && value !== undefined && value !== null)
-          .slice(0, 8)
-          .map(([key, value]) => `${key}: ${Array.isArray(value) ? formatList(value) : typeof value === "object" ? JSON.stringify(value) : value}`)
-          .join(" | "),
-      source: bestEntry.source,
-    };
-  }
-
+  // UNKNOWN / FALLBACK
   return {
     text:
-      "I can answer questions about Deepshik using the portfolio knowledge base, including his identity, education, skills, experience, projects, research, certifications, achievements, and portfolio focus. " +
-      "If a specific fact is not contained in that knowledge base, I won't guess.",
+      "I can help you explore Deepshik's portfolio, including his " +
+      "about information, education, skills, experience, projects, " +
+      "research, certifications, achievements, and creative work. " +
+      "Ask me something specific about him or his work.",
     source: "Portfolio",
   };
 }
@@ -1045,7 +1074,7 @@ export default function AIAssistant() {
     window.clearTimeout(responseTimerRef.current);
     responseTimerRef.current = window.setTimeout(() => {
 
-      const answer = getLocalAnswer(question, messages);
+      const answer = getLocalAnswer(question);
 
       setMessages((current) => [
 
