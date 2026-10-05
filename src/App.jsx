@@ -3416,6 +3416,39 @@ export default function Portfolio() {
   const videoRef = useRef(null);
 
   /* ==========================================================
+     RESET NARRATIVE VIDEO SOUND WHEN LEAVING THE SECTION
+     ========================================================== */
+
+  useEffect(() => {
+    const section = document.getElementById("narrative-zoom-out");
+
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When the user leaves the narrative video section,
+        // always return the sound to the default muted state.
+        if (!entry.isIntersecting) {
+          setVideoMuted(true);
+
+          // Also update the actual video element immediately.
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+          }
+        }
+      },
+      {
+        root: null,
+        threshold: 0.15,
+      }
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
+  }, []);
+
+  /* ==========================================================
      ROTATING HELLO / NAMASTE
      ========================================================== */
 
@@ -9566,11 +9599,11 @@ export default function Portfolio() {
 
           <div
             style={{
-              minHeight: isMobile ? 245 : 270,
+              minHeight: isMobile ? 350 : 270,
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "center",
-              padding: isMobile ? "110px 0 0" : "160px 0 0",
+              padding: isMobile ? "170px 0 0" : "160px 0 0",
               boxSizing: "border-box",
               overflow: "visible",
             }}
@@ -9582,7 +9615,7 @@ export default function Portfolio() {
               }))}
               
               sublabel={`${CONTENT.certifications.length} certifications`}
-              trigger="hover"
+              trigger={isMobile ? "click" : "hover"}
               closeOnSelect={false}
               physics
               drift={0.5}
