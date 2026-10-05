@@ -498,35 +498,114 @@ function greeting(hour) {
 }
 
 /* ============================================================
-   MOBILE / WEBGL SAFETY HELPERS
+   ADAPTIVE DEVICE / PERFORMANCE PROFILE
    ============================================================ */
 
-function isMobileViewport() {
-  return typeof window !== "undefined" && window.innerWidth <= 768;
+function getDeviceProfile() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    return {
+      mobile: false,
+      cores: 4,
+      memory: 8,
+      dpr: 1,
+      dprCap: 2,
+      quality: "high",
+      antialias: true,
+      reducedMotion: false,
+      saveData: false,
+      connectionType: "unknown",
+    };
+  }
+
+  const nav = navigator;
+  const width = window.innerWidth || 0;
+  const height = window.innerHeight || 0;
+  const mobile = width <= 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(nav.userAgent || "");
+  const cores = Math.max(1, Number(nav.hardwareConcurrency) || (mobile ? 4 : 8));
+  const memory = Number(nav.deviceMemory) || (mobile ? 4 : 8);
+  const dpr = Math.max(1, Number(window.devicePixelRatio) || 1);
+  const pixels = width * height * dpr * dpr;
+  const saveData = Boolean(nav.connection?.saveData);
+  const connectionType = nav.connection?.effectiveType || nav.connection?.type || "unknown";
+  const reducedMotion = Boolean(
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
+
+  // deviceMemory is not available in every browser, so CPU, DPR, viewport
+  // size and connection hints are used as additional signals.
+  const lowDevice =
+    saveData ||
+    cores <= 4 ||
+    memory <= 4 ||
+    (mobile && dpr >= 3) ||
+    pixels >= 12000000;
+
+  const mediumDevice =
+    !lowDevice &&
+    (cores <= 6 || memory <= 6 || (mobile && pixels >= 7000000));
+
+  const quality = lowDevice ? "low" : mediumDevice ? "medium" : "high";
+
+  // Keep every visual effect enabled. Only reduce the resolution at which
+  // the GPU has to render the effect.
+  const dprCap =
+    quality === "low" ? (mobile ? 1 : 1.5) :
+    quality === "medium" ? (mobile ? 1.25 : 1.75) :
+    mobile ? 1.5 : 2;
+
+  return {
+    mobile,
+    cores,
+    memory,
+    dpr,
+    dprCap,
+    quality,
+    antialias: quality !== "low",
+    reducedMotion,
+    saveData,
+    connectionType,
+  };
 }
 
-/*
- * Do not probe WebGL by creating a throw-away context. On some mobile
- * browsers every temporary context counts toward the device's WebGL context
- * limit and can cause later renderers to fail. The actual renderers below
- * perform their own try/catch when creating a context.
- */
-function supportsWebGL() {
-  return typeof window !== "undefined" && typeof document !== "undefined";
+function getAdaptiveDpr(desktopMax = 2, mobileMax = 1.5) {
+  const profile = getDeviceProfile();
+  const requestedMax = profile.mobile ? mobileMax : desktopMax;
+  return Math.min(profile.dpr, requestedMax, profile.dprCap);
 }
 
-function getSafeDpr(maxDesktop = 2, maxMobile = 1.25) {
-  if (typeof window === "undefined") return 1;
+function getAdaptiveAntialias() {
+  return getDeviceProfile().antialias;
+}
 
-  const dpr = window.devicePixelRatio || 1;
-  const mobile = isMobileViewport();
 
-  // Keep all effects active on mobile, but avoid enormous GPU framebuffers on
-  // high-density phones. Lower-memory phones get an even smaller DPR.
-  const deviceMemory = Number(window.navigator?.deviceMemory || 0);
-  const mobileCap = deviceMemory > 0 && deviceMemory <= 4 ? 1 : maxMobile;
+function createAdaptiveOGLRenderer(options, label = "WebGL effect") {
+  try {
+    return new Renderer(options);
+  } catch (error) {
+    console.warn(`${label} could not initialize WebGL:`, error);
+    return null;
+  }
+}
 
-  return Math.min(dpr, mobile ? mobileCap : maxDesktop);
+function createAdaptiveThreeRenderer(options, label = "Three.js effect") {
+  try {
+    return new THREE.WebGLRenderer(options);
+  } catch (error) {
+    console.warn(`${label} could not initialize WebGL:`, error);
+    return null;
+  }
+}
+
+function addWebGLContextSafety(canvas, onLost) {
+  if (!canvas) return () => {};
+
+  const handleLost = (event) => {
+    event.preventDefault();
+    onLost?.(event);
+  };
+
+  canvas.addEventListener("webglcontextlost", handleLost, false);
+  return () => canvas.removeEventListener("webglcontextlost", handleLost, false);
 }
 
 /* ============================================================
@@ -665,19 +744,15 @@ function SpecularButton({
     const fx = fxRef.current;
     if (!btn || !fx) return;
 
-    const dpr = getSafeDpr(2, 1);
-    let renderer;
-    try {
-      renderer = new Renderer({
+    const dpr = getAdaptiveDpr(2, 1.5);
+    const renderer = createAdaptiveOGLRenderer({
       alpha: true,
       premultipliedAlpha: true,
-      antialias: true,
-        dpr,
-      });
-    } catch (error) {
-      console.warn("Specular WebGL effect disabled:", error);
-      return;
-    }
+      antialias: getAdaptiveAntialias(),
+      dpr,
+      powerPreference: "high-performance",
+    });
+    if (!renderer) return;
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
@@ -1057,17 +1132,16 @@ const Lightfall = ({
     const container = containerRef.current;
     if (!container) return;
 
-    let renderer;
-    try {
-      renderer = new Renderer({
-      dpr: dpr ?? getSafeDpr(2, 1.25),
+    const renderer = createAdaptiveOGLRenderer({
+      dpr: Math.min(
+        dpr ?? getAdaptiveDpr(2, 1.5),
+        getAdaptiveDpr(2, 1.5)
+      ),
       alpha: true,
-        antialias: true
-      });
-    } catch (error) {
-      console.warn("Lightfall WebGL effect disabled:", error);
-      return;
-    }
+      antialias: getAdaptiveAntialias(),
+      powerPreference: "high-performance",
+    });
+    if (!renderer) return;
     rendererRef.current = renderer;
     const gl = renderer.gl;
     const canvas = gl.canvas;
@@ -2108,9 +2182,6 @@ function STLModelViewer({ isMobile }) {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Keep the full 3D viewer on mobile too. If WebGL creation fails, show the
-    // existing error state instead of allowing the component to break the page.
-
     let disposed = false;
 
     const scene = new THREE.Scene();
@@ -2124,21 +2195,18 @@ function STLModelViewer({ isMobile }) {
     );
     camera.position.set(0, 0, 5);
 
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        powerPreference: "high-performance",
-      });
-    } catch (error) {
-      console.warn("STL WebGL renderer unavailable:", error);
-      setModelLoaded(false);
+    const renderer = createAdaptiveThreeRenderer({
+      antialias: getAdaptiveAntialias(),
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+
+    if (!renderer) {
       setModelError("3D rendering is unavailable on this browser/device.");
       return;
     }
 
-    renderer.setPixelRatio(getSafeDpr(2, 1.25));
+    renderer.setPixelRatio(getAdaptiveDpr(2, 1.5));
     renderer.setSize(
       mount.clientWidth,
       mount.clientHeight,
@@ -2981,34 +3049,20 @@ const GridScan = ({
     const container = containerRef.current;
     if (!container) return;
 
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        powerPreference: "high-performance",
-      });
-    } catch (error) {
-      console.warn("GridScan WebGL effect disabled:", error);
-      return;
-    }
+    const renderer = createAdaptiveThreeRenderer({
+      antialias: getAdaptiveAntialias(),
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    if (!renderer) return;
     rendererRef.current = renderer;
-    renderer.setPixelRatio(getSafeDpr(2, 1.25));
+    renderer.setPixelRatio(getAdaptiveDpr(2, 1.5));
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.autoClear = false;
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
-
-    // Mobile Safari/Chrome can reclaim GPU contexts under memory pressure.
-    // Prevent a context-loss event from taking down the React tree.
-    const onContextLost = (event) => {
-      event.preventDefault();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      console.warn("GridScan WebGL context lost; effect paused safely.");
-    };
-    renderer.domElement.addEventListener("webglcontextlost", onContextLost, false);
 
     const uniforms = {
       iResolution: {
@@ -3138,7 +3192,6 @@ const GridScan = ({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', onResize);
-      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       material.dispose();
       quad.geometry.dispose();
 
@@ -9394,7 +9447,7 @@ export default function Portfolio() {
           muted={videoMuted}
           playsInline
           preload="metadata"
-          decoding="async"
+                decoding="async"
           style={{
             position: "absolute",
             inset: 0,
@@ -10531,12 +10584,7 @@ lift={isMobile ? 12 : 30}
           FOOTER
           ====================================================== */}
 
-      <div
-        className="socials-footer-lightfall"
-        style={{
-          background: "radial-gradient(circle at 50% 20%, rgba(56,189,248,0.16), transparent 45%), #07131D",
-        }}
-      >
+      <div className="socials-footer-lightfall">
         <Lightfall
           colors={["#A6C8FF", "#5227FF", "#1451B7"]}
           backgroundColor="#07131D"
