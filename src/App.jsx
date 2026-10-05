@@ -505,25 +505,28 @@ function isMobileViewport() {
   return typeof window !== "undefined" && window.innerWidth <= 768;
 }
 
+/*
+ * Do not probe WebGL by creating a throw-away context. On some mobile
+ * browsers every temporary context counts toward the device's WebGL context
+ * limit and can cause later renderers to fail. The actual renderers below
+ * perform their own try/catch when creating a context.
+ */
 function supportsWebGL() {
-  if (typeof document === "undefined") return false;
-
-  try {
-    const canvas = document.createElement("canvas");
-    const gl =
-      canvas.getContext("webgl2", { powerPreference: "low-power" }) ||
-      canvas.getContext("webgl", { powerPreference: "low-power" }) ||
-      canvas.getContext("experimental-webgl");
-    return !!gl;
-  } catch {
-    return false;
-  }
+  return typeof window !== "undefined" && typeof document !== "undefined";
 }
 
 function getSafeDpr(maxDesktop = 2, maxMobile = 1.25) {
   if (typeof window === "undefined") return 1;
+
   const dpr = window.devicePixelRatio || 1;
-  return Math.min(dpr, isMobileViewport() ? maxMobile : maxDesktop);
+  const mobile = isMobileViewport();
+
+  // Keep all effects active on mobile, but avoid enormous GPU framebuffers on
+  // high-density phones. Lower-memory phones get an even smaller DPR.
+  const deviceMemory = Number(window.navigator?.deviceMemory || 0);
+  const mobileCap = deviceMemory > 0 && deviceMemory <= 4 ? 1 : maxMobile;
+
+  return Math.min(dpr, mobile ? mobileCap : maxDesktop);
 }
 
 /* ============================================================
@@ -661,10 +664,6 @@ function SpecularButton({
     const btn = btnRef.current;
     const fx = fxRef.current;
     if (!btn || !fx) return;
-
-    // The visual border has a CSS fallback. Avoid creating a WebGL context
-    // for every button on mobile or on browsers without reliable WebGL.
-    if (isMobileViewport() || !supportsWebGL()) return;
 
     const dpr = getSafeDpr(2, 1);
     let renderer;
@@ -1057,10 +1056,6 @@ const Lightfall = ({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    // Mobile gets a lightweight CSS background instead of another full-screen
-    // WebGL renderer. This prevents GPU/context exhaustion on lower-end phones.
-    if (isMobileViewport() || !supportsWebGL()) return;
 
     let renderer;
     try {
@@ -2113,13 +2108,8 @@ function STLModelViewer({ isMobile }) {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // Keep the mobile page responsive. The STL viewer remains in the layout,
-    // but its WebGL renderer is not created on phones.
-    if (isMobileViewport() || !supportsWebGL()) {
-      setModelLoaded(false);
-      setModelError(isMobileViewport() ? "3D viewer is optimized for desktop. Use the Source link below to view the model." : "3D rendering is unavailable in this browser.");
-      return;
-    }
+    // Keep the full 3D viewer on mobile too. If WebGL creation fails, show the
+    // existing error state instead of allowing the component to break the page.
 
     let disposed = false;
 
@@ -2134,14 +2124,21 @@ function STLModelViewer({ isMobile }) {
     );
     camera.position.set(0, 0, 5);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-    });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
+    } catch (error) {
+      console.warn("STL WebGL renderer unavailable:", error);
+      setModelLoaded(false);
+      setModelError("3D rendering is unavailable on this browser/device.");
+      return;
+    }
 
-    renderer.setPixelRatio(
-      getSafeDpr(2, 1.25)
-    );
+    renderer.setPixelRatio(getSafeDpr(2, 1.25));
     renderer.setSize(
       mount.clientWidth,
       mount.clientHeight,
@@ -2984,13 +2981,13 @@ const GridScan = ({
     const container = containerRef.current;
     if (!container) return;
 
-    // GridScan is intentionally disabled on mobile. The section keeps its
-    // layout/background, but avoids a second continuous Three.js renderer.
-    if (isMobileViewport() || !supportsWebGL()) return;
-
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
     } catch (error) {
       console.warn("GridScan WebGL effect disabled:", error);
       return;
@@ -3003,6 +3000,15 @@ const GridScan = ({
     renderer.autoClear = false;
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
+
+    // Mobile Safari/Chrome can reclaim GPU contexts under memory pressure.
+    // Prevent a context-loss event from taking down the React tree.
+    const onContextLost = (event) => {
+      event.preventDefault();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      console.warn("GridScan WebGL context lost; effect paused safely.");
+    };
+    renderer.domElement.addEventListener("webglcontextlost", onContextLost, false);
 
     const uniforms = {
       iResolution: {
@@ -3132,6 +3138,7 @@ const GridScan = ({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', onResize);
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       material.dispose();
       quad.geometry.dispose();
 
@@ -9387,6 +9394,7 @@ export default function Portfolio() {
           muted={videoMuted}
           playsInline
           preload="metadata"
+          decoding="async"
           style={{
             position: "absolute",
             inset: 0,
