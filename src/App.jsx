@@ -1306,6 +1306,505 @@ const Lightfall = ({
    INTERACTIVE POLAROID CAMERA
    ============================================================ */
 
+/* ============================================================
+   DNA OF DEEPSHIK — CREATIVE SKILLS / IDENTITY SECTION
+   ============================================================ */
+const DNA_NODES = [
+  {
+    id: "data",
+    label: "DATA",
+    side: "left",
+    story: "It started with curiosity about how raw information could be turned into something meaningful. Data became the foundation for how I think, question and solve problems.",
+    items: ["Python", "SQL", "Snowflake", "ETL", "Tableau"],
+  },
+  {
+    id: "code",
+    label: "CODE",
+    side: "right",
+    story: "Once I understood the data, I wanted to do something with it. Code became the bridge between an idea and something that could actually work.",
+    items: ["Python", "React", "Flask", "APIs", "GitHub"],
+  },
+  {
+    id: "research",
+    label: "RESEARCH",
+    side: "left",
+    story: "Building things led to deeper questions: why do they work, where do they fail, and how can they become more reliable? That curiosity pulled me into research and experimentation.",
+    items: ["IoT Security", "ML", "SHAP", "Adversarial ML", "Research"],
+  },
+  {
+    id: "design",
+    label: "DESIGN",
+    side: "right",
+    story: "But solving a problem is only part of the journey. I started caring about how ideas are experienced — making complex things clearer, more intuitive and easier to understand.",
+    items: ["Figma", "UI/UX", "Web Design", "Interaction", "Motion"],
+  },
+  {
+    id: "creative",
+    label: "CREATIVE",
+    side: "left",
+    story: "That naturally extended beyond code. Photography, video, editing and visual experiments taught me to look at the same idea from different perspectives and tell its story visually.",
+    items: ["Photography", "Video", "Editing", "Visuals", "3D"],
+  },
+  {
+    id: "build",
+    label: "BUILD",
+    side: "right",
+    story: "And that is where everything comes together — data gives me direction, code gives me structure, research gives me depth, design gives me clarity and creativity gives it identity. I build to turn those ideas into something real.",
+    items: ["Experiment", "Prototype", "Ship", "Iterate", "Learn"],
+  },
+];
+
+function DNAOfDeepshik({ isMobile }) {
+  const mountRef = useRef(null);
+  const resetViewRef = useRef(null);
+  const [activeId, setActiveId] = useState("data");
+  const [hoveredId, setHoveredId] = useState(null);
+  const active = DNA_NODES.find((node) => node.id === activeId) || DNA_NODES[0];
+  const goToThread = (id) => {
+    setActiveId(id);
+    window.requestAnimationFrame(() => {
+      document.getElementById("dna-threads")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+  const activeIdRef = useRef(activeId);
+  const hoveredIdRef = useRef(hoveredId);
+
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
+
+  useEffect(() => {
+    hoveredIdRef.current = hoveredId;
+  }, [hoveredId]);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    camera.position.set(0, 1.1, 13.8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.className = "dna-3d-canvas";
+    renderer.domElement.setAttribute("aria-label", "Interactive 3D DNA visualization");
+    mount.appendChild(renderer.domElement);
+
+    const group = new THREE.Group();
+    group.rotation.x = -0.08;
+    scene.add(group);
+
+    scene.add(new THREE.AmbientLight(0x9fdcff, 1.8));
+    const keyLight = new THREE.PointLight(0x38bdf8, 5.5, 24);
+    keyLight.position.set(0, 4, 8);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0x5227ff, 4.2, 20);
+    fillLight.position.set(0, -4, 5);
+    scene.add(fillLight);
+
+    const strandMaterialA = new THREE.MeshStandardMaterial({
+      color: 0x63c7ff,
+      emissive: 0x0a5d94,
+      emissiveIntensity: 1.5,
+      metalness: 0.7,
+      roughness: 0.22,
+    });
+    const strandMaterialB = new THREE.MeshStandardMaterial({
+      color: 0x8a78ff,
+      emissive: 0x26106f,
+      emissiveIntensity: 1.35,
+      metalness: 0.72,
+      roughness: 0.2,
+    });
+    const rungMaterial = new THREE.MeshStandardMaterial({
+      color: 0xb9ddff,
+      emissive: 0x174f76,
+      emissiveIntensity: 0.85,
+      metalness: 0.6,
+      roughness: 0.25,
+    });
+
+    const radius = 1.15;
+    const length = 12.8;
+    const turns = 2.35;
+    const steps = 180;
+    const strandPointsA = [];
+    const strandPointsB = [];
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const x = -length / 2 + t * length;
+      const angle = t * Math.PI * 2 * turns;
+      strandPointsA.push(new THREE.Vector3(x, Math.cos(angle) * radius, Math.sin(angle) * radius));
+      strandPointsB.push(new THREE.Vector3(x, Math.cos(angle + Math.PI) * radius, Math.sin(angle + Math.PI) * radius));
+    }
+
+    const curveA = new THREE.CatmullRomCurve3(strandPointsA);
+    const curveB = new THREE.CatmullRomCurve3(strandPointsB);
+    const tubeA = new THREE.Mesh(new THREE.TubeGeometry(curveA, 220, 0.075, 10, false), strandMaterialA);
+    const tubeB = new THREE.Mesh(new THREE.TubeGeometry(curveB, 220, 0.075, 10, false), strandMaterialB);
+    group.add(tubeA, tubeB);
+
+    const rungGroup = new THREE.Group();
+    const nodeGroup = new THREE.Group();
+    group.add(rungGroup, nodeGroup);
+
+    const threadNodes = [];
+    const helixCount = 13;
+
+    for (let i = 0; i < helixCount; i += 1) {
+      const t = i / (helixCount - 1);
+      const x = -length / 2 + t * length;
+      const angle = t * Math.PI * 2 * turns;
+      const a = new THREE.Vector3(x, Math.cos(angle) * radius, Math.sin(angle) * radius);
+      const b = new THREE.Vector3(x, Math.cos(angle + Math.PI) * radius, Math.sin(angle + Math.PI) * radius);
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+      const direction = b.clone().sub(a);
+      const rung = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, direction.length(), 8),
+        rungMaterial
+      );
+      rung.position.copy(midpoint);
+      rung.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+      rungGroup.add(rung);
+    }
+
+    const nodeGeometry = new THREE.SphereGeometry(0.22, 24, 24);
+    const nodeGlowGeometry = new THREE.SphereGeometry(0.34, 18, 18);
+
+    // Numeric labels attached directly to each 3D DNA node.
+    const createNodeNumber = (number) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      ctx.clearRect(0, 0, 128, 128);
+      ctx.beginPath();
+      ctx.arc(64, 64, 48, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(4, 18, 30, 0.92)";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(166, 200, 255, 0.95)";
+      ctx.stroke();
+      ctx.font = "700 40px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#EAF6FF";
+      ctx.fillText(String(number).padStart(2, "0"), 64, 65);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(0.62, 0.62, 1);
+      sprite.position.set(0, 0, 0.32);
+      sprite.renderOrder = 20;
+      sprite.userData.dnaNumberTexture = texture;
+      sprite.userData.dnaNumberMaterial = material;
+      return sprite;
+    };
+    const nodeMaterials = {
+      cyan: new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x087ca8, emissiveIntensity: 2.6, metalness: 0.4, roughness: 0.15 }),
+      violet: new THREE.MeshStandardMaterial({ color: 0x8b7cff, emissive: 0x3420a0, emissiveIntensity: 2.3, metalness: 0.45, roughness: 0.15 }),
+    };
+
+    DNA_NODES.forEach((node, index) => {
+      const t = (index + 0.7) / (DNA_NODES.length + 0.4);
+      const x = -length / 2 + t * length;
+      const angle = t * Math.PI * 2 * turns;
+      const sideAngle = angle + (index % 2 ? Math.PI : 0);
+      const position = new THREE.Vector3(x, Math.cos(sideAngle) * radius, Math.sin(sideAngle) * radius);
+      const mesh = new THREE.Mesh(nodeGeometry, index % 2 ? nodeMaterials.violet : nodeMaterials.cyan);
+      mesh.position.copy(position);
+      mesh.userData.nodeId = node.id;
+      mesh.userData.baseScale = 1;
+      mesh.userData.nodeNumber = index + 1;
+
+      const numberSprite = createNodeNumber(index + 1);
+      if (numberSprite) mesh.add(numberSprite);
+
+      const glow = new THREE.Mesh(
+        nodeGlowGeometry,
+        new THREE.MeshBasicMaterial({ color: index % 2 ? 0x6f5cff : 0x38bdf8, transparent: true, opacity: 0.08, depthWrite: false })
+      );
+      glow.position.copy(position);
+      glow.userData.nodeId = node.id;
+      nodeGroup.add(glow, mesh);
+      threadNodes.push(mesh);
+    });
+
+    const particleCount = 90;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i += 1) {
+      const t = Math.random();
+      const x = -length / 2 + t * length;
+      const angle = t * Math.PI * 2 * turns + (Math.random() - 0.5) * 0.45;
+      const r = 1.7 + Math.random() * 1.3;
+      particlePositions[i * 3] = x;
+      particlePositions[i * 3 + 1] = Math.cos(angle) * r;
+      particlePositions[i * 3 + 2] = Math.sin(angle) * r;
+    }
+    const particleGeometry = new THREE.BufferGeometry();
+    particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(
+      particleGeometry,
+      new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.035, transparent: true, opacity: 0.55, depthWrite: false })
+    );
+    group.add(particles);
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let hoveredMesh = null;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let targetRotY = 0;
+    let targetRotX = -0.08;
+    let currentRotY = 0;
+    let currentRotX = -0.08;
+    let frameId = 0;
+    let disposed = false;
+
+    const resize = () => {
+      const width = Math.max(1, mount.clientWidth);
+      const height = Math.max(1, mount.clientHeight);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    };
+
+    const setPointer = (event) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    };
+
+    const pointerMove = (event) => {
+      setPointer(event);
+      if (dragging) {
+        targetRotY += (event.clientX - lastX) * 0.008;
+        targetRotX += (event.clientY - lastY) * 0.004;
+        targetRotX = THREE.MathUtils.clamp(targetRotX, -0.65, 0.65);
+        lastX = event.clientX;
+        lastY = event.clientY;
+        return;
+      }
+
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(threadNodes, false);
+      const hit = hits[0]?.object || null;
+      if (hit !== hoveredMesh) {
+        hoveredMesh = hit;
+        setHoveredId(hit?.userData?.nodeId || null);
+        renderer.domElement.style.cursor = hit ? "pointer" : "grab";
+      }
+    };
+
+    const pointerDown = (event) => {
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      renderer.domElement.setPointerCapture?.(event.pointerId);
+      renderer.domElement.style.cursor = "grabbing";
+    };
+
+    const pointerUp = (event) => {
+      dragging = false;
+      renderer.domElement.releasePointerCapture?.(event.pointerId);
+      renderer.domElement.style.cursor = hoveredMesh ? "pointer" : "grab";
+    };
+
+    const click = (event) => {
+      setPointer(event);
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects(threadNodes, false)[0]?.object;
+      if (hit?.userData?.nodeId) goToThread(hit.userData.nodeId);
+    };
+
+    renderer.domElement.addEventListener("pointermove", pointerMove);
+    renderer.domElement.addEventListener("pointerdown", pointerDown);
+    renderer.domElement.addEventListener("pointerup", pointerUp);
+    renderer.domElement.addEventListener("pointercancel", pointerUp);
+    renderer.domElement.addEventListener("click", click);
+    window.addEventListener("resize", resize);
+    resize();
+
+    resetViewRef.current = () => {
+      targetRotY = 0;
+      targetRotX = -0.08;
+      currentRotY = 0;
+      currentRotX = -0.08;
+      pointer.set(0, 0);
+      camera.position.set(0, 1.1, 13.8);
+      camera.lookAt(0, 0, 0);
+      renderer.domElement.style.cursor = "grab";
+    };
+
+    const animate = (time) => {
+      if (disposed) return;
+      frameId = requestAnimationFrame(animate);
+      const seconds = time * 0.001;
+
+      if (!dragging) targetRotY += 0.0018;
+      currentRotY += (targetRotY - currentRotY) * 0.075;
+      currentRotX += (targetRotX - currentRotX) * 0.075;
+      group.rotation.y = currentRotY;
+      group.rotation.x = currentRotX;
+
+      threadNodes.forEach((mesh, index) => {
+        const activeNode = mesh.userData.nodeId === activeIdRef.current;
+        const hoveredNode = mesh.userData.nodeId === hoveredIdRef.current;
+        const pulse = 1 + Math.sin(seconds * 2.2 + index) * 0.04;
+        const targetScale = (activeNode ? 1.65 : hoveredNode ? 1.4 : 1) * pulse;
+        mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.12);
+        mesh.material.emissiveIntensity = activeNode ? 4.5 : hoveredNode ? 3.6 : 2.2;
+      });
+
+      particles.rotation.x = seconds * 0.025;
+      particles.rotation.z = -seconds * 0.018;
+
+      camera.position.x += ((pointer.x * 0.7) - camera.position.x) * 0.025;
+      camera.position.y += ((1.1 - pointer.y * 0.45) - camera.position.y) * 0.025;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    };
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      disposed = true;
+      resetViewRef.current = null;
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", resize);
+      renderer.domElement.removeEventListener("pointermove", pointerMove);
+      renderer.domElement.removeEventListener("pointerdown", pointerDown);
+      renderer.domElement.removeEventListener("pointerup", pointerUp);
+      renderer.domElement.removeEventListener("pointercancel", pointerUp);
+      renderer.domElement.removeEventListener("click", click);
+      renderer.dispose();
+      scene.traverse((object) => {
+        if (object.userData?.dnaNumberTexture) object.userData.dnaNumberTexture.dispose();
+        if (object.userData?.dnaNumberMaterial) object.userData.dnaNumberMaterial.dispose();
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
+          else object.material.dispose();
+        }
+      });
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return (
+    <section id="dna-of-deepshik" className="dna-section">
+      <div className="dna-glow dna-glow-one" aria-hidden="true" />
+      <div className="dna-glow dna-glow-two" aria-hidden="true" />
+
+      <div className="dna-container">
+        <div className="dna-intro">
+          <span className="dna-eyebrow">A LITTLE BIT OF EVERYTHING</span>
+          <h2 className="font-display">The DNA of Deepshik.</h2>
+          <p>
+            Six threads. One system. Drag the helix, explore each node, and see how data,
+            engineering, research, design and creativity connect.
+          </p>
+        </div>
+
+        <div className="dna-3d-shell">
+          <div className="dna-3d-topbar">
+            <span>DK/ SYSTEM MAP</span>
+            <span className="dna-live-dot"><i /> 3D INTERACTIVE</span>
+          </div>
+
+          <div ref={mountRef} className="dna-3d-stage" />
+
+          <div className="dna-3d-hints-top" aria-hidden="true">
+            <span className="dna-3d-hint-pill">↔&nbsp; DRAG TO ROTATE</span>
+            <span className="dna-3d-hint-pill">●&nbsp; CLICK A NODE TO INSPECT THREAD</span>
+          </div>
+
+          <button
+            type="button"
+            className="dna-3d-reset-pill"
+            onClick={() => resetViewRef.current?.()}
+            aria-label="Reset 3D DNA view"
+          >
+            RESET
+          </button>
+        </div>
+
+        <div id="dna-threads" className="dna-threads-section">
+          <div className="dna-threads-heading">
+            <span>THREADS</span>
+            <p>Select a node to trace the thread. </p>
+          </div>
+
+          <div className="dna-thread-nav" role="tablist" aria-label="Explore Deepshik's threads">
+            {DNA_NODES.map((node, index) => (
+              <button
+                key={node.id}
+                type="button"
+                role="tab"
+                aria-selected={activeId === node.id}
+                className={`dna-thread-button ${activeId === node.id ? "is-active" : ""}`}
+                onClick={() => goToThread(node.id)}
+                onMouseEnter={() => setHoveredId(node.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <span className="dna-thread-index">0{index + 1}</span>
+                <span>{node.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="dna-thread-divider" aria-hidden="true" />
+
+          <article className="dna-detail-panel" key={active.id}>
+            <div className="dna-detail-column dna-detail-column-thread">
+              <span className="dna-detail-column-label">THREAD</span>
+              <span className="dna-detail-number">0{DNA_NODES.findIndex((node) => node.id === active.id) + 1}</span>
+              <span className="dna-detail-kicker">{active.label}</span>
+            </div>
+
+            <div className="dna-detail-column dna-detail-column-story">
+              <span className="dna-detail-column-label">EVOLUTION</span>
+              <p>{active.story}</p>
+            </div>
+
+            <div className="dna-detail-column dna-detail-column-tools">
+              <span className="dna-detail-column-label">TOOLS</span>
+              <div className="dna-detail-tags">
+                {active.items.map((item) => <span key={item}>{item}</span>)}
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div className="dna-statement">
+          <span>NOT A SINGLE LANE.</span>
+          <strong>A SYSTEM OF CURIOSITY.</strong>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function PolaroidCamera({ isMobile }) {
   const [stage, setStage] = useState("camera");
   const [capturedImage, setCapturedImage] = useState(null);
@@ -7039,6 +7538,938 @@ export default function Portfolio() {
           }
         }
 
+.dna-section {
+          position: relative;
+          overflow: hidden;
+          min-height: 100vh;
+          padding: 120px 24px 110px;
+          background:
+            radial-gradient(circle at 18% 25%, rgba(56,189,248,0.10), transparent 28%),
+            radial-gradient(circle at 84% 72%, rgba(82,39,255,0.09), transparent 30%),
+            linear-gradient(180deg, #06131D 0%, #081A27 50%, #06131D 100%);
+          color: #EAF6FF;
+          isolation: isolate;
+        }
+
+        .dna-container {
+          position: relative;
+          z-index: 2;
+          width: min(1240px, 100%);
+          margin: 0 auto;
+        }
+
+        .dna-intro {
+          max-width: 820px;
+          margin: 0 auto 46px;
+          text-align: center;
+        }
+
+        .dna-eyebrow {
+          display: inline-block;
+          margin-bottom: 14px;
+          font-size: 10px;
+          letter-spacing: 0.28em;
+          font-weight: 700;
+          color: rgba(166,200,255,0.68);
+        }
+
+        .dna-intro h2 {
+          margin: 0 0 16px;
+          font-size: clamp(40px, 6vw, 76px);
+          line-height: 0.98;
+          color: #F4F8FF;
+        }
+
+        .dna-intro p {
+          max-width: 680px;
+          margin: 0 auto;
+          color: rgba(234,246,255,0.62);
+          font-size: 14px;
+          line-height: 1.8;
+        }
+
+        .dna-3d-shell {
+          position: relative;
+          overflow: hidden;
+          border: 1px solid rgba(166,200,255,0.13);
+          border-radius: 32px;
+          background: linear-gradient(180deg, rgba(4,18,29,0.82), rgba(5,16,27,0.68));
+          box-shadow: 0 35px 110px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.045);
+          backdrop-filter: blur(18px);
+        }
+
+        .dna-3d-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image:
+            linear-gradient(rgba(166,200,255,0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(166,200,255,0.035) 1px, transparent 1px);
+          background-size: 42px 42px;
+          mask-image: radial-gradient(ellipse at center, black 25%, transparent 82%);
+        }
+
+        .dna-3d-topbar {
+          position: relative;
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 17px 20px;
+          border-bottom: 1px solid rgba(166,200,255,0.08);
+          color: rgba(166,200,255,0.45);
+          font-size: 8px;
+          letter-spacing: 0.2em;
+          font-weight: 700;
+        }
+
+        .dna-live-dot {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .dna-live-dot i {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #38BDF8;
+          box-shadow: 0 0 14px rgba(56,189,248,0.9);
+          animation: dnaLivePulse 1.8s ease-in-out infinite;
+        }
+
+        .dna-3d-stage {
+          position: relative;
+          height: 500px;
+          width: 100%;
+          touch-action: none;
+        }
+
+        .dna-3d-canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+
+        .dna-3d-hints-top {
+          position: absolute;
+          top: 74px;
+          left: 18px;
+          right: 18px;
+          z-index: 5;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          pointer-events: none;
+        }
+
+        .dna-3d-hint-pill,
+        .dna-3d-reset-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 30px;
+          padding: 0 12px;
+          border: 1px solid rgba(166,200,255,0.16);
+          border-radius: 999px;
+          background: rgba(5,20,32,0.72);
+          color: rgba(230,245,255,0.68);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.055), 0 8px 24px rgba(0,0,0,0.18);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          font-size: 7px;
+          line-height: 1;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          white-space: nowrap;
+        }
+
+        .dna-3d-hint-pill:first-child {
+          border-color: rgba(56,189,248,0.18);
+        }
+
+        .dna-3d-hint-pill:last-child {
+          border-color: rgba(166,200,255,0.14);
+        }
+
+        .dna-3d-reset-pill {
+          position: absolute;
+          left: 50%;
+          bottom: 17px;
+          z-index: 5;
+          transform: translateX(-50%);
+          min-width: 76px;
+          min-height: 31px;
+          border-color: rgba(56,189,248,0.22);
+          color: rgba(234,246,255,0.78);
+          cursor: pointer;
+          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+        }
+
+        .dna-3d-reset-pill:hover {
+          transform: translateX(-50%) translateY(-2px);
+          border-color: rgba(56,189,248,0.48);
+          background: rgba(56,189,248,0.09);
+          color: #EAF6FF;
+        }
+
+        .dna-3d-reset-pill:active {
+          transform: translateX(-50%) translateY(0);
+        }
+
+        .dna-3d-reset-pill:focus-visible {
+          outline: 2px solid rgba(56,189,248,0.6);
+          outline-offset: 3px;
+        }
+
+        .dna-threads-section {
+          position: relative;
+          margin-top: 34px;
+          scroll-margin-top: 110px;
+          padding: 28px;
+          border: 1px solid rgba(166,200,255,0.12);
+          border-radius: 28px;
+          background: linear-gradient(180deg, rgba(7,24,38,0.84), rgba(5,17,29,0.72));
+          box-shadow: 0 24px 70px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.035);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+        }
+
+        .dna-thread-divider {
+          height: 1px;
+          margin: 20px 0 0;
+          background: linear-gradient(90deg, transparent, rgba(166,200,255,0.11) 15%, rgba(166,200,255,0.11) 85%, transparent);
+        }
+
+        .dna-threads-heading {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 18px;
+          margin: 0 0 14px;
+          color: rgba(230,245,255,0.58);
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+
+        .dna-threads-heading p {
+          margin: 0;
+          letter-spacing: 0;
+          text-transform: none;
+          font-size: 12px;
+          color: rgba(230,245,255,0.42);
+        }
+
+        .dna-thread-nav {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .dna-thread-button {
+          min-height: 58px;
+          padding: 9px 12px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 4px;
+          text-align: left;
+          border: 1px solid rgba(166,200,255,0.08);
+          border-radius: 14px;
+          background: rgba(166,200,255,0.025);
+          color: rgba(234,246,255,0.46);
+          cursor: pointer;
+          transition: 220ms ease;
+        }
+
+        .dna-thread-button:hover,
+        .dna-thread-button.is-active {
+          border-color: rgba(56,189,248,0.28);
+          background: rgba(56,189,248,0.07);
+          color: #EAF6FF;
+          transform: translateY(-2px);
+        }
+
+        .dna-thread-index {
+          color: rgba(56,189,248,0.55);
+          font-size: 8px;
+          letter-spacing: 0.12em;
+        }
+
+        .dna-thread-button > span:last-child {
+          font-size: 10px;
+          letter-spacing: 0.14em;
+          font-weight: 700;
+        }
+
+        .dna-detail-panel {
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          align-items: stretch;
+          margin-top: 18px;
+          padding: 20px 0 4px;
+          background: transparent;
+          animation: dnaPanelIn 380ms ease both;
+        }
+
+        .dna-detail-column {
+          min-width: 0;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          padding: 6px 24px;
+          overflow: hidden;
+        }
+
+        .dna-detail-column + .dna-detail-column {
+          border-left: 1px solid rgba(166,200,255,0.13);
+        }
+
+        .dna-detail-column-thread {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 8px;
+          padding-left: 28px;
+        }
+
+        .dna-detail-number {
+          color: rgba(56,189,248,0.72);
+          font-size: 11px;
+          letter-spacing: 0.2em;
+          font-weight: 700;
+        }
+
+        .dna-detail-kicker {
+          color: #F2F8FF;
+          font-size: 15px;
+          letter-spacing: 0.16em;
+          font-weight: 700;
+        }
+
+        .dna-detail-column-label {
+          display: block;
+          margin-bottom: 11px;
+          color: rgba(166,200,255,0.55);
+          font-size: 9px;
+          letter-spacing: 0.18em;
+          font-weight: 700;
+        }
+
+        .dna-detail-column-story p {
+          margin: 0;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          font-family: inherit;
+          font-size: clamp(11px, 0.82vw, 13px);
+          line-height: 1.65;
+          font-weight: 700;
+          color: #F2F8FF;
+          text-align: justify;
+          text-justify: inter-word;
+          overflow-wrap: anywhere;
+          word-break: normal;
+          hyphens: auto;
+        }
+
+        .dna-detail-tags {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          align-content: flex-start;
+          gap: 7px;
+          margin-top: 2px;
+          max-width: 100%;
+        }
+
+        .dna-detail-tags span {
+          padding: 6px 9px;
+          border: 1px solid rgba(166,200,255,0.1);
+          border-radius: 999px;
+          background: rgba(166,200,255,0.035);
+          color: rgba(234,246,255,0.62);
+          font-size: 8px;
+          white-space: nowrap;
+        }
+
+        .dna-statement {
+          display: flex;
+          align-items: baseline;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 48px;
+          text-align: center;
+          color: rgba(234,246,255,0.32);
+          font-size: 10px;
+          letter-spacing: 0.16em;
+        }
+
+        .dna-statement strong {
+          color: rgba(234,246,255,0.78);
+          font-weight: 600;
+        }
+
+        .dna-glow {
+          position: absolute;
+          z-index: 0;
+          width: 440px;
+          height: 440px;
+          border-radius: 50%;
+          filter: blur(100px);
+          opacity: 0.12;
+          pointer-events: none;
+        }
+
+        .dna-glow-one { top: 5%; left: -180px; background: #38BDF8; }
+        .dna-glow-two { right: -180px; bottom: 3%; background: #5227FF; }
+
+        @keyframes dnaLivePulse {
+          0%, 100% { opacity: 0.45; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.25); }
+        }
+
+        @keyframes dnaPanelIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+          .dna-thread-nav { grid-template-columns: repeat(3, 1fr); }
+          .dna-detail-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .dna-detail-column { padding-left: 16px; padding-right: 16px; }
+          .dna-detail-column-story p { font-size: 11px; line-height: 1.6; text-align: justify; }
+        }
+
+        @media (max-width: 640px) {
+          .dna-section { min-height: auto; padding: 72px 12px 64px; }
+          .dna-intro { margin-bottom: 24px; }
+          .dna-intro h2 { font-size: clamp(36px, 11vw, 52px); }
+          .dna-intro p { font-size: 11px; line-height: 1.6; }
+
+          .dna-3d-shell { border-radius: 22px; }
+          .dna-threads-section {
+            padding: 13px 14px 14px;
+            margin-top: 22px;
+            border-radius: 18px;
+          }
+
+          .dna-threads-heading {
+            gap: 8px;
+            margin: 0 0 8px;
+            font-size: 8px;
+            letter-spacing: 0.16em;
+          }
+
+          .dna-threads-heading p {
+            font-size: 10px;
+            line-height: 1.25;
+          }
+
+          .dna-thread-nav {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+          }
+
+          .dna-thread-button {
+            min-height: 40px;
+            padding: 6px 10px;
+            gap: 2px;
+            border-radius: 12px;
+          }
+
+          .dna-thread-index {
+            font-size: 7px;
+            line-height: 1;
+          }
+
+          .dna-thread-button > span:last-child {
+            font-size: 9px;
+            line-height: 1.05;
+            letter-spacing: 0.12em;
+          }
+
+          .dna-thread-divider {
+            margin: 11px 0 0;
+          }
+
+          .dna-detail-panel {
+            grid-template-columns: 1fr;
+            gap: 0;
+            margin-top: 4px;
+            padding: 0;
+          }
+
+          .dna-detail-column {
+            padding: 11px 3px;
+          }
+
+          .dna-detail-column + .dna-detail-column {
+            border-left: 0;
+            border-top: 1px solid rgba(166,200,255,0.09);
+          }
+
+          .dna-detail-column-thread {
+            min-height: 34px;
+            height: 34px;
+            padding: 0 3px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            white-space: nowrap;
+            text-align: center;
+          }
+
+          .dna-detail-column-thread .dna-detail-column-label {
+            margin: 0;
+            display: inline;
+            font-size: 8px;
+            line-height: 1;
+          }
+
+          .dna-detail-number {
+            font-size: 9px;
+            line-height: 1;
+            letter-spacing: 0.16em;
+          }
+
+          .dna-detail-kicker {
+            font-size: 13px;
+            line-height: 1;
+            letter-spacing: 0.14em;
+          }
+
+          .dna-detail-column-story p {
+            max-width: none;
+            font-size: 12px;
+            line-height: 1.45;
+            text-align: justify;
+          }
+
+          .dna-detail-tags {
+            margin-top: 2px;
+            gap: 5px;
+          }
+
+          .dna-detail-tags span {
+            padding: 5px 7px;
+            font-size: 8px;
+          }
+
+          .dna-statement { margin-top: 28px; font-size: 8px; }
+
+          .dna-3d-topbar { padding: 12px; }
+          .dna-3d-stage { height: 360px; }
+          .dna-3d-hints-top { top: 62px; left: 9px; right: 9px; gap: 6px; }
+          .dna-3d-hint-pill { min-height: 26px; padding: 0 7px; font-size: 6px; letter-spacing: 0.09em; }
+          .dna-3d-reset-pill { bottom: 11px; min-height: 28px; min-width: 66px; font-size: 6px; }
+        }
+
+/* ============================
+           REFERENCE POLAROID CAMERA
+           ============================ */
+
+        .polaroid-camera-wrap {
+          position: relative;
+        }
+
+        .reference-polaroid-camera {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1.38 / 1;
+          overflow: hidden;
+          border-radius: 28px;
+          background:
+            linear-gradient(
+              180deg,
+              #fbfbfd 0%,
+              #e9e8eb 70%,
+              #3b393b 70%,
+              #252426 100%
+            );
+          box-shadow:
+            0 26px 55px rgba(0,0,0,0.30),
+            inset 0 1px 0 rgba(255,255,255,0.96);
+          isolation: isolate;
+        }
+
+        .reference-camera-top {
+          position: absolute;
+          inset: 0 0 30% 0;
+        }
+
+        .reference-camera-bottom {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 30%;
+        }
+
+        .reference-camera-flash {
+          position: absolute;
+          left: 7%;
+          top: 9%;
+          width: 14%;
+          height: 53%;
+          border-radius: 15px;
+          border: 3px solid #444247;
+          background:
+            repeating-linear-gradient(
+              0deg,
+              rgba(30,30,30,0.18) 0 2px,
+              rgba(255,255,255,0.72) 2px 4px
+            ),
+            linear-gradient(
+              90deg,
+              #d2d2d2,
+              #ffffff,
+              #c9c9c9
+            );
+          box-shadow:
+            inset 0 0 0 2px rgba(255,255,255,0.72),
+            0 5px 10px rgba(0,0,0,0.18);
+        }
+
+        .reference-camera-timer {
+          position: absolute;
+          left: 25%;
+          top: 14%;
+          width: 4.5%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background: #f4f4f4;
+          border: 1px solid #a9a9ab;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+        }
+
+        .reference-camera-sensor {
+          position: absolute;
+          left: 25.5%;
+          top: 25%;
+          width: 3.4%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background: #121214;
+          border: 3px solid #303033;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        }
+
+        .reference-camera-lens {
+          position: absolute;
+          left: 50%;
+          top: 43%;
+          width: 39%;
+          aspect-ratio: 1;
+          transform: translate(-50%, -50%);
+          padding: 0;
+          border: 12px solid #111113;
+          border-radius: 50%;
+          background:
+            repeating-radial-gradient(
+              circle,
+              #29292c 0 2px,
+              #101012 2px 4px
+            );
+          box-shadow:
+            0 18px 32px rgba(0,0,0,0.35),
+            inset 0 0 0 4px #050507;
+          cursor: pointer;
+          overflow: hidden;
+          transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease;
+        }
+
+        .reference-camera-lens:hover {
+          transform:
+            translate(-50%, -50%)
+            scale(1.025);
+          box-shadow:
+            0 20px 38px rgba(0,0,0,0.40),
+            inset 0 0 0 4px #050507;
+        }
+
+        .reference-camera-lens:active {
+          transform:
+            translate(-50%, -50%)
+            scale(0.985);
+        }
+
+        .reference-camera-glass {
+          position: absolute;
+          inset: 18%;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background:
+            radial-gradient(
+              circle at 45% 38%,
+              #536b63 0 7%,
+              #17171b 20%,
+              #070709 55%,
+              #151519 100%
+            );
+          box-shadow:
+            inset 0 0 0 2px rgba(255,255,255,0.08),
+            inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .reference-lens-label {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          color: #e5e5e5;
+          font-size: 7px;
+          font-weight: 700;
+          letter-spacing: 0.45px;
+        }
+
+        .reference-camera-shutter {
+          position: absolute;
+          left: 7%;
+          top: 70%;
+          width: 11%;
+          aspect-ratio: 1;
+          border: 0;
+          border-radius: 50%;
+          background:
+            radial-gradient(
+              circle at 35% 30%,
+              #e99a96,
+              #c76f6c
+            );
+          color: #fff;
+          box-shadow:
+            0 5px 0 #995956,
+            0 8px 15px rgba(0,0,0,0.20);
+          cursor: not-allowed;
+        }
+
+        .reference-shutter-label {
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .reference-camera-viewfinder {
+          position: absolute;
+          right: 7%;
+          top: 10%;
+          width: 19%;
+          aspect-ratio: 1;
+          border-radius: 18px;
+          border: 3px solid #3d3b3f;
+          background:
+            linear-gradient(
+              145deg,
+              #111112,
+              #3c3a3d 50%,
+              #09090a
+            );
+          box-shadow:
+            inset 0 0 0 3px rgba(255,255,255,0.08),
+            0 6px 12px rgba(0,0,0,0.25);
+          overflow: hidden;
+        }
+
+        .reference-camera-viewfinder .reference-camera-glass {
+          inset: 20%;
+          background:
+            linear-gradient(
+              145deg,
+              #f5f5f7,
+              #cfcfd2
+            );
+          border-radius: 10px;
+          box-shadow:
+            inset 0 2px 4px rgba(0,0,0,0.22);
+        }
+
+        .reference-viewfinder-back {
+          width: 100%;
+          height: 100%;
+          border-radius: inherit;
+        }
+
+        .reference-camera-toggle-container {
+          position: absolute;
+          right: 10%;
+          top: 50%;
+          width: 9%;
+          height: 5%;
+          border-radius: 999px;
+          background: #c77f00;
+        }
+
+        .reference-camera-toggle {
+          position: absolute;
+          left: 45%;
+          top: 0;
+          width: 55%;
+          height: 100%;
+          border-radius: 50%;
+          background: #ffcc35;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.20);
+        }
+
+        .reference-camera-power {
+          position: absolute;
+          right: 27%;
+          top: 69%;
+          width: 5%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background: #08080a;
+          border: 4px solid #2e2e31;
+          box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+        }
+
+        .reference-bottom-toggle-container {
+          position: absolute;
+          left: 50%;
+          top: -5%;
+          transform: translateX(-50%);
+          width: 26%;
+          height: 26%;
+        }
+
+        .reference-bottom-toggle {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          border-radius: 0 0 15px 15px;
+          background:
+            linear-gradient(
+              180deg,
+              #6d6b6d,
+              #353336 48%,
+              #1e1d1f
+            );
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.22);
+        }
+
+        .reference-bottom-handle {
+          position: absolute;
+          right: 7%;
+          top: 18%;
+          width: 22%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background: #4a484b;
+          box-shadow:
+            0 2px 4px rgba(0,0,0,0.35);
+        }
+
+        .reference-camera-printer {
+          position: absolute;
+          left: 9%;
+          right: 9%;
+          top: 36%;
+          height: 28%;
+          border-radius: 4px;
+          border: 5px solid #4c4a4d;
+          background:
+            linear-gradient(
+              180deg,
+              #4c4a4d,
+              #151416 35%,
+              #28272a 70%,
+              #111112
+            );
+          box-shadow:
+            inset 0 0 0 2px #080809;
+        }
+
+        .reference-print-track {
+          position: absolute;
+          left: 13%;
+          right: 13%;
+          top: 44%;
+          height: 8%;
+          border-radius: 2px;
+          background: #151416;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+
+        .reference-camera-labels {
+          position: absolute;
+          left: 13%;
+          right: 13%;
+          bottom: 7%;
+          height: 30%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .reference-camera-rainbow {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 8%;
+          height: 85%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .reference-camera-rainbow i {
+          flex: 1;
+        }
+
+        .reference-camera-rainbow i:nth-child(1) {
+          background: #14a8e5;
+        }
+
+        .reference-camera-rainbow i:nth-child(2) {
+          background: #0dbb72;
+        }
+
+        .reference-camera-rainbow i:nth-child(3) {
+          background: #ffd11a;
+        }
+
+        .reference-camera-rainbow i:nth-child(4) {
+          background: #ff8a00;
+        }
+
+        .reference-camera-rainbow i:nth-child(5) {
+          background: #e73532;
+        }
+
+        .reference-camera-logo {
+          color: #dddadd;
+          font-size: clamp(18px, 3vw, 30px);
+          font-weight: 700;
+          letter-spacing: -0.6px;
+        }
+
+        .reference-camera-type {
+          position: absolute;
+          right: 0;
+          width: 13%;
+          height: 10%;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.08);
+        }
+
+
         /* ============================
            REFERENCE POLAROID CAMERA
            ============================ */
@@ -10533,52 +11964,10 @@ lift={isMobile ? 12 : 30}
 
 
       {/* ======================================================
-          STL / 3D MODEL
+          DNA OF DEEPSHIK — SYSTEM MAP
           ====================================================== */}
 
-      <section
-        id="stl-model"
-        className="stl-model-section"
-      >
-        <div className="stl-gridscan-bg" aria-hidden="true">
-          <GridScan
-            sensitivity={0.55}
-            lineThickness={1}
-            linesColor="#234A68"
-            gridScale={0.1}
-            scanColor="#38BDF8"
-            scanOpacity={0.4}
-            enablePost
-            bloomIntensity={0.6}
-            chromaticAberration={0.002}
-            noiseIntensity={0.01}
-            lineJitter={0.1}
-            scanGlow={0.5}
-            scanSoftness={2}
-            enableWebcam={false}
-            showPreview={false}
-          />
-        </div>
-
-        <div className="stl-model-container">
-          <div className="stl-model-heading">
-            <span className="stl-model-eyebrow">
-              INTERACTIVE 3D MODEL (PLAYGROUND)
-            </span>
-
-            <h2 className="font-display">
-              Meshes &amp; forms . 
-            </h2>
-
-            <p>
-              A small detour into 3D  — an interactive
-              look at <strong>sorayamachest.stl,</strong> a concept inspired by the futuristic aesthetic of <strong>Hajime Sorayama.</strong> An STL model I’ve included for visual exploration and interaction only. Model credit belongs to the original creator.
-            </p>
-          </div>
-
-          <STLModelViewer isMobile={isMobile} />
-        </div>
-      </section>
+      <DNAOfDeepshik isMobile={isMobile} />
 
       {/* ======================================================
           FOOTER
