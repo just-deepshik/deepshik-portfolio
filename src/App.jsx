@@ -10458,7 +10458,7 @@ lift={isMobile ? 12 : 30}
 
       <div className="socials-footer-lightfall">
         <Lightfall
-          colors={["#A6C8FF", "#5227FF", "#1451B7"]}
+          colors={["#BAE6FD", "#0284C7", "#173A5E"]}
           backgroundColor="#07131D"
           speed={0.5}
           streakCount={2}
