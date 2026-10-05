@@ -4098,20 +4098,34 @@ export default function Portfolio() {
             Accept: "application/json",
           },
           body: JSON.stringify({
-            name: contactForm.name,
-            email: contactForm.email,
-            purpose: contactForm.purpose,
-            _subject: `New portfolio enquiry from ${contactForm.name}`,
+            name: contactForm.name.trim(),
+            email: contactForm.email.trim(),
+            purpose: contactForm.purpose.trim(),
+            _subject: `New portfolio enquiry from ${contactForm.name.trim()}`,
             _template: "table",
-            _captcha: true,
+            _captcha: false,
+            _url: window.location.href,
+            _honey: "",
           }),
         }
       );
 
-      const data = await response.json();
+      const rawResponse = await response.text();
+      let data = {};
+
+      try {
+        data = rawResponse ? JSON.parse(rawResponse) : {};
+      } catch {
+        data = {};
+      }
 
       if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Unable to send the message.");
+        const serverMessage =
+          typeof data.message === "string" && data.message.trim()
+            ? data.message.trim()
+            : `FormSubmit returned HTTP ${response.status}.`;
+
+        throw new Error(serverMessage);
       }
 
       setContactStatus(
@@ -10833,10 +10847,14 @@ export default function Portfolio() {
         }
 
         .contact-form-status {
-          padding: 10px 12px;
+          width: 72%;
+          align-self: center;
+          box-sizing: border-box;
+          padding: 8px 12px;
           border-radius: 12px;
           font-size: 11px;
           line-height: 1.5;
+          text-align: center;
         }
 
         .contact-form-status.is-success {
