@@ -6666,13 +6666,189 @@ export default function Portfolio() {
             background: rgba(255,255,255,0.18);
           }
 
+          /* ============================================================
+             MOBILE BIRDS
+             Desktop bird animation remains completely unchanged.
+             Mobile uses an independently scaled sprite and stable
+             GPU-composited flight path to prevent vibration/frame mixing.
+             ============================================================ */
+
+          .portfolio-birds {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 3;
+            contain: paint;
+            isolation: isolate;
+          }
+
           .portfolio-bird-container {
-            top: 12%;
+            position: absolute;
+            left: 0;
+
+            width: 72px;
+            height: 100px;
+
+            margin: 0;
+            padding: 0;
+
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+
+            transform:
+              translate3d(-90px, 0, 0)
+              scale(0.42);
+
+            transform-origin: center center;
+
+            animation-name: portfolioMobileFlyRight;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
           }
 
           .portfolio-bird {
-            width: 70px;
+            width: 72px;
             height: 100px;
+
+            background-image: url('/bird-cells-new.svg');
+            background-repeat: no-repeat;
+
+            /* 10 frames × 72px = 720px. */
+            background-size: 720px 100px;
+            background-position: 0 0;
+
+            will-change: background-position;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+
+            animation-name: portfolioMobileFlyCycle;
+            animation-timing-function: steps(10, end);
+            animation-iteration-count: infinite;
+
+            transform: translate3d(0, 0, 0);
+          }
+
+          @keyframes portfolioMobileFlyCycle {
+            from {
+              background-position: 0 0;
+            }
+
+            to {
+              background-position: -720px 0;
+            }
+          }
+
+          /*
+           * Stable mobile flight.
+           * Avoids aggressive transform changes that can look like
+           * vibration when combined with the sprite animation.
+           */
+          @keyframes portfolioMobileFlyRight {
+            0% {
+              transform:
+                translate3d(-90px, 0, 0)
+                scale(0.42);
+              opacity: 0;
+            }
+
+            8% {
+              opacity: 1;
+            }
+
+            25% {
+              transform:
+                translate3d(20vw, 10px, 0)
+                scale(0.42);
+            }
+
+            50% {
+              transform:
+                translate3d(48vw, -6px, 0)
+                scale(0.44);
+            }
+
+            75% {
+              transform:
+                translate3d(76vw, 8px, 0)
+                scale(0.46);
+            }
+
+            92% {
+              opacity: 1;
+            }
+
+            100% {
+              transform:
+                translate3d(115vw, -8px, 0)
+                scale(0.48);
+              opacity: 0;
+            }
+          }
+
+          /*
+           * Independent vertical lanes, durations and phases keep
+           * the four birds visually separated.
+           */
+
+          .portfolio-bird-container-1 {
+            top: 12%;
+            animation-duration: 19s;
+            animation-delay: -1s;
+          }
+
+          .portfolio-bird-1 {
+            animation-duration: 0.95s;
+            animation-delay: 0s;
+          }
+
+          .portfolio-bird-container-2 {
+            top: 25%;
+            animation-duration: 23s;
+            animation-delay: -8s;
+          }
+
+          .portfolio-bird-2 {
+            animation-duration: 1.08s;
+            animation-delay: -0.32s;
+          }
+
+          .portfolio-bird-container-3 {
+            top: 39%;
+            animation-duration: 26s;
+            animation-delay: -15s;
+          }
+
+          .portfolio-bird-3 {
+            animation-duration: 1.18s;
+            animation-delay: -0.58s;
+          }
+
+          .portfolio-bird-container-4 {
+            top: 18%;
+            animation-duration: 21s;
+            animation-delay: -17s;
+          }
+
+          .portfolio-bird-4 {
+            animation-duration: 0.88s;
+            animation-delay: -0.18s;
+          }
+
+          /*
+           * Keep the bird layer visually stable while the narrative
+           * section participates in the cinematic scroll transition.
+           */
+          #narrative-bring-down .portfolio-birds {
+            transform: translate3d(0, 0, 0);
+            transform-origin: center center;
+          }
+
+          #narrative-bring-down .portfolio-bird-container,
+          #narrative-bring-down .portfolio-bird {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
           }
 
           .hero-role-glass {
