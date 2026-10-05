@@ -1543,9 +1543,9 @@ useEffect(() => {
     const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.lang = "en-US";
     if (preferredVoice) utterance.voice = preferredVoice;
-    utterance.rate = 1.5;
-    utterance.pitch = 1.0;
-    utterance.volume = 2.0;
+    utterance.rate = 1.15;
+    utterance.pitch = 0.98;
+    utterance.volume = 1;
 
     utterance.onstart = () => {
       setSpeakingId(message.id);
