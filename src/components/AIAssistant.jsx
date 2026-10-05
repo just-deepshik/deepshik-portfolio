@@ -1200,20 +1200,25 @@ useEffect(() => {
            ========================= */
 
         @media (max-width: 640px) {
+          /* Mobile B.L.U.E. launcher — nav-like width, but thinner. */
           .dk-ai-launcher {
+            left: max(14px, env(safe-area-inset-left)) !important;
             right: max(14px, env(safe-area-inset-right)) !important;
-            bottom: max(14px, env(safe-area-inset-bottom)) !important;
+            bottom: max(10px, env(safe-area-inset-bottom)) !important;
 
-            min-width: 86px;
-            min-height: 38px;
-            padding: 6px 10px 6px 7px;
+            width: auto !important;
+            min-width: 0 !important;
+            min-height: 28px !important;
+            height: 28px !important;
+            padding: 2px 12px !important;
 
+            gap: 6px;
             border-radius: 999px !important;
           }
 
           .dk-ai-launcher-icon {
-            width: 24px;
-            height: 24px;
+            width: 19px;
+            height: 19px;
           }
 
           .dk-ai-launcher-label {
@@ -1335,14 +1340,19 @@ useEffect(() => {
         /* Small phones */
         @media (max-width: 380px) {
           .dk-ai-launcher {
-            min-width: 82px;
-            min-height: 36px;
-            padding-right: 9px;
+            left: max(12px, env(safe-area-inset-left)) !important;
+            right: max(12px, env(safe-area-inset-right)) !important;
+            bottom: max(8px, env(safe-area-inset-bottom)) !important;
+
+            min-width: 0 !important;
+            min-height: 26px !important;
+            height: 26px !important;
+            padding: 2px 10px !important;
           }
 
           .dk-ai-launcher-icon {
-            width: 23px;
-            height: 23px;
+            width: 18px;
+            height: 18px;
           }
 
           .dk-ai-panel {
