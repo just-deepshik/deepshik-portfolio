@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
+ import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import Matter from "matter-js";
 import * as faceapi from "face-api.js";
 import { BloomEffect, ChromaticAberrationEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
@@ -9292,7 +9292,7 @@ export default function Portfolio() {
           textAlign: "center",
           minHeight:
             isMobile
-              ? 420
+              ? 500
               : 520,
           display: "flex",
           alignItems: "center",
