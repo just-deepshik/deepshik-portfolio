@@ -45,303 +45,538 @@ const QUICK_PROMPTS = [
 ];
 
 function normalize(text = "") {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  return text.toLowerCase().replace(/[^\w\s]/g, " ");
+function tokenize(text = "") {
+  return normalize(text)
+    .split(" ")
+    .filter(Boolean);
+}
 
+function scoreMatch(question, candidates = []) {
+  const q = normalize(question);
+  const qTokens = new Set(tokenize(question));
+  let score = 0;
+
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalize(candidate);
+    if (!normalizedCandidate) continue;
+
+    if (q.includes(normalizedCandidate)) {
+      score += normalizedCandidate.split(" ").length * 8;
+    }
+
+    for (const token of tokenize(normalizedCandidate)) {
+      if (qTokens.has(token)) {
+        score += token.length >= 4 ? 2 : 1;
+      }
+    }
+  }
+
+  return score;
+}
+
+function getProjectSearchText(project) {
+  return [
+    project?.id,
+    project?.name,
+    project?.fullTitle,
+    project?.tag,
+    project?.type,
+    project?.description,
+    project?.purpose,
+    ...(project?.technologies || []),
+    ...(project?.datasets || []),
+    ...(project?.methods || []),
+    ...(project?.capabilities || []),
+    ...(project?.pipeline || []),
+    ...(project?.keywords || []),
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function findBestProject(question) {
+  const projects = portfolioKnowledge.projects || [];
 
+  if (!projects.length) return null;
+
+  const scored = projects
+    .map((project) => ({
+      project,
+      score: scoreMatch(question, [
+        project.name,
+        project.fullTitle,
+        project.tag,
+        project.type,
+        project.description,
+        project.purpose,
+        ...(project.technologies || []),
+        ...(project.datasets || []),
+        ...(project.methods || []),
+        ...(project.capabilities || []),
+        ...(project.pipeline || []),
+        ...(project.keywords || []),
+        getProjectSearchText(project),
+      ]),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0]?.score > 0 ? scored[0].project : null;
+}
+
+function detectIntent(question) {
   const q = normalize(question);
 
-  if (
+  const intents = {
+    identity: [
+      "who is deepshik",
+      "who is deepshik kodam",
+      "who is he",
+      "tell me about deepshik",
+      "tell me about him",
+      "about deepshik",
+      "about him",
+      "what does deepshik do",
+      "what does he do",
+      "what is his role",
+      "what kind of engineer",
+    ],
 
-    q.includes("iot") ||
+    education: [
+      "education",
+      "degree",
+      "college",
+      "university",
+      "studied",
+      "study",
+      "btech",
+      "b tech",
+      "computer science",
+      "data science",
+      "graduation",
+    ],
 
-    q.includes("intrusion") ||
+    skills: [
+      "skills",
+      "technical skills",
+      "technologies",
+      "technology",
+      "tech stack",
+      "programming languages",
+      "tools",
+      "what can he work with",
+      "what does he know",
+    ],
 
-    q.includes("security")
+    experience: [
+      "experience",
+      "work experience",
+      "professional experience",
+      "internship",
+      "intern",
+      "worked",
+      "work history",
+      "company",
+      "companies",
+      "evoastra",
+    ],
 
-  ) {
+    certifications: [
+      "certification",
+      "certifications",
+      "certificate",
+      "certificates",
+      "snowflake badge",
+      "snowflake certification",
+      "workshop",
+      "workshops",
+    ],
 
-    return portfolioKnowledge.projects.find((p) =>
+    achievements: [
+      "achievement",
+      "achievements",
+      "award",
+      "awards",
+      "won",
+      "filmmaker",
+      "short film",
+      "techknowthon",
+    ],
 
-      p.name.includes("IoT")
+    research: [
+      "research",
+      "research paper",
+      "paper",
+      "publication",
+      "published",
+      "iot research",
+      "intrusion detection",
+      "dataset",
+      "datasets",
+      "shap",
+      "fgsm",
+      "pgd",
+      "concept drift",
+    ],
 
-    );
+    projects: [
+      "project",
+      "projects",
+      "portfolio project",
+      "portfolio projects",
+      "what has he built",
+      "what did he build",
+      "his work",
+      "show me his work",
+    ],
 
+    contact: [
+      "contact",
+      "email",
+      "reach",
+      "reach him",
+      "get in touch",
+      "social media",
+      "linkedin",
+      "github",
+    ],
+  };
+
+  let bestIntent = "unknown";
+  let bestScore = 0;
+
+  for (const [intent, keywords] of Object.entries(intents)) {
+    const score = scoreMatch(question, keywords);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIntent = intent;
+    }
   }
 
-  if (
-
-    q.includes("data engineering") ||
-
-    q.includes("snowflake") ||
-
-    q.includes("talend") ||
-
-    q.includes("etl") ||
-
-    q.includes("pipeline") ||
-
-    q.includes("cac")
-
-  ) {
-
-    return portfolioKnowledge.projects.find((p) =>
-
-      p.name.includes("CAC")
-
-    );
-
-  }
-
-  if (
-
-    q.includes("caption") ||
-
-    q.includes("computer vision") ||
-
-    q.includes("internship") ||
-
-    q.includes("intern")
-
-  ) {
-
-    return portfolioKnowledge.projects.find(
-
-      (p) => p.name === "Captionize"
-
-    );
-
-  }
-
-  return null;
-
+  return bestIntent;
 }
 
 function getLocalAnswer(question) {
-
   const q = normalize(question);
 
   const {
-
+    identity,
     about,
-
+    education,
     skills,
-
+    skillsByCategory,
     experience,
-
     projects,
-
     certifications,
-
+    achievements,
     research,
-
+    portfolio,
   } = portfolioKnowledge;
 
-  if (
+  const intent = detectIntent(question);
 
-    q.includes("who") ||
-
-    q.includes("about deepshik") ||
-
-    q.includes("about him") ||
-
-    q.includes("introduce")
-
-  ) {
-
+  // IDENTITY / ABOUT
+  if (intent === "identity") {
     return {
-
-      text: `${about.name} is a ${about.role} based in ${about.location}. He is a B.Tech Computer Science & Engineering (Data Science) graduate from CMR College of Engineering & Technology. His work spans data engineering, software development, machine learning, and digital design.`,
-
+      text:
+        `${identity.name} is a ${identity.role} based in ${identity.location}. ` +
+        `${identity.summary || about.summary} ` +
+        `His portfolio focuses on ${portfolio.focusAreas
+          .slice(0, 5)
+          .join(", ")}, and related digital experiences.`,
       source: "About",
-
+      section: "about",
     };
-
   }
 
-  if (
+  // EDUCATION
+  if (intent === "education") {
+    return {
+      text:
+        `${identity.name} completed a ${education.degree} in ` +
+        `${education.field} at ${education.institution} ` +
+        `(${education.period}).`,
+      source: "Education",
+      section: "education",
+    };
+  }
 
-    q.includes("skill") ||
+  // SKILLS
+  if (intent === "skills") {
+    const programming =
+      skillsByCategory?.programming?.length
+        ? skillsByCategory.programming.join(", ")
+        : "";
 
-    q.includes("technology") ||
+    const dataEngineering =
+      skillsByCategory?.dataEngineering?.length
+        ? skillsByCategory.dataEngineering.join(", ")
+        : "";
 
-    q.includes("tech stack") ||
+    const development =
+      skillsByCategory?.development?.length
+        ? skillsByCategory.development.join(", ")
+        : "";
 
-    q.includes("know")
+    const analytics =
+      skillsByCategory?.analytics?.length
+        ? skillsByCategory.analytics.join(", ")
+        : "";
 
-  ) {
+    const parts = [];
+
+    if (programming) {
+      parts.push(`Programming: ${programming}`);
+    }
+
+    if (dataEngineering) {
+      parts.push(`Data & data engineering: ${dataEngineering}`);
+    }
+
+    if (analytics) {
+      parts.push(`Analytics: ${analytics}`);
+    }
+
+    if (development) {
+      parts.push(`Development: ${development}`);
+    }
+
+    if (!parts.length) {
+      parts.push(`His skills include ${skills.join(", ")}.`);
+    }
 
     return {
-
-      text: `His core toolkit includes ${skills
-
-        .slice(0, 12)
-
-        .join(", ")}, along with ${skills
-
-        .slice(12)
-
-        .join(", ")}.`,
-
+      text: `${identity.name}'s technical toolkit includes:\n\n${parts.join(
+        "\n"
+      )}`,
       source: "Tools & Skills",
-
+      section: "skills",
     };
-
   }
 
-  if (
-
-    q.includes("experience") ||
-
-    q.includes("internship") ||
-
-    q.includes("intern")
-
-  ) {
+  // EXPERIENCE
+  if (intent === "experience") {
+    if (!experience?.length) {
+      return {
+        text:
+          "I don't currently have detailed professional experience information in Deepshik's portfolio knowledge base.",
+        source: "Experience",
+      };
+    }
 
     const job = experience[0];
 
     return {
-
-      text: `${job.role} at ${job.company} (${job.period}). ${job.description}`,
-
+      text:
+        `${job.role} at ${job.company} (${job.period}). ` +
+        `${job.description}`,
       source: "Experience",
-
+      section: "experience",
     };
-
   }
 
-  if (
+  // CERTIFICATIONS
+  if (intent === "certifications") {
+    if (!certifications?.length) {
+      return {
+        text:
+          "I don't currently have certification information in Deepshik's portfolio knowledge base.",
+        source: "Certifications",
+      };
+    }
 
-    q.includes("cert") ||
+    const certificationText = certifications
+      .map((cert, index) => {
+        if (typeof cert === "string") {
+          return `${index + 1}. ${cert}`;
+        }
 
-    q.includes("snowflake badge") ||
-
-    q.includes("snowflake workshop")
-
-  ) {
+        return `${index + 1}. ${cert.name}${
+          cert.provider ? ` — ${cert.provider}` : ""
+        }${cert.date ? ` (${cert.date})` : ""}`;
+      })
+      .join("\n");
 
     return {
-
-      text: `The portfolio lists ${certifications.length} certifications/workshops, including ${certifications.join(
-
-        "; "
-
-      )}.`,
-
+      text:
+        `${identity.name}'s portfolio lists ${certifications.length} ` +
+        `certifications/workshops:\n\n${certificationText}`,
       source: "Certifications",
-
+      section: "certifications",
     };
-
   }
 
-  if (
+  // ACHIEVEMENTS
+  if (intent === "achievements") {
+    if (!achievements?.length) {
+      return {
+        text:
+          "I don't currently have achievement information in Deepshik's portfolio knowledge base.",
+        source: "Achievements",
+      };
+    }
 
-    q.includes("research") ||
+    const achievementText = achievements
+      .map((achievement, index) => {
+        if (typeof achievement === "string") {
+          return `${index + 1}. ${achievement}`;
+        }
 
-    q.includes("paper") ||
-
-    q.includes("publication")
-
-  ) {
+        return `${index + 1}. ${
+          achievement.description || achievement.title
+        }`;
+      })
+      .join("\n");
 
     return {
-
-      text: `${research.title}. It uses the ${research.datasets.join(
-
-        " and "
-
-      )} datasets, with ${research.methods.join(
-
-        ", "
-
-      )}. The project was presented at ICT4SD 2026 and has a FastAPI deployment.`,
-
-      source: "Research",
-
+      text:
+        `${identity.name}'s listed achievements include:\n\n${achievementText}`,
+      source: "Achievements",
+      section: "achievements",
     };
-
   }
 
+  // RESEARCH
+  if (intent === "research") {
+    const datasets =
+      research?.datasets?.join(" and ") || "the listed datasets";
+
+    const methods =
+      research?.methods?.join(", ") || "the listed methods";
+
+    return {
+      text:
+        `${research.title}. ` +
+        `The research uses the ${datasets} datasets and includes ` +
+        `${methods}. ` +
+        `${research.publication} ` +
+        `${research.deployment}`,
+      source: "Research",
+      section: "work",
+      link:
+        projects.find((project) => project.id === "iot-ids")?.url || null,
+    };
+  }
+
+  // PROJECT-SPECIFIC QUESTIONS
   const project = findBestProject(question);
 
   if (project) {
+    const qHasTech = [
+      "technology",
+      "technologies",
+      "tech",
+      "stack",
+      "tools",
+      "built with",
+      "used",
+      "use",
+    ].some((word) => q.includes(word));
 
-    return {
+    const qHasDataset = [
+      "dataset",
+      "datasets",
+      "data used",
+      "trained on",
+      "training data",
+    ].some((word) => q.includes(word));
 
-      text: `${project.name}: ${project.description}`,
+    const qHasPurpose = [
+      "why",
+      "purpose",
+      "what is it",
+      "what does it do",
+      "what is the project",
+      "explain",
+    ].some((word) => q.includes(word));
 
-      source: project.name,
+    const qHasPipeline = [
+      "pipeline",
+      "flow",
+      "architecture",
+      "process",
+      "raw",
+      "staging",
+      "analytics",
+    ].some((word) => q.includes(word));
 
-      link: project.url,
+    let text = "";
 
-      section: project.section,
+    if (qHasDataset && project.datasets?.length) {
+      text =
+        `${project.name} used the following datasets: ` +
+        `${project.datasets.join(", ")}.`;
+    } else if (qHasTech && project.technologies?.length) {
+      text =
+        `${project.name} uses: ` +
+        `${project.technologies.join(", ")}.`;
+    } else if (qHasPipeline && project.pipeline?.length) {
+      text =
+        `${project.name}'s pipeline is: ` +
+        `${project.pipeline.join(" → ")}.`;
+    } else if (qHasPurpose && project.purpose) {
+      text = `${project.name}: ${project.purpose}`;
+    } else {
+      text = `${project.name}: ${project.description}`;
 
-    };
-
-  }
-
-  if (
-
-    q.includes("project") ||
-
-    q.includes("work") ||
-
-    q.includes("portfolio")
-
-  ) {
-
-    return {
-
-      text: `There are ${projects.length} featured projects: ${projects
-
-        .map((p) => p.name)
-
-        .join(
-
+      if (project.technologies?.length) {
+        text += ` Technologies include ${project.technologies.join(
           ", "
+        )}.`;
+      }
 
-        )}. Ask me about any one of them and I can take you to the Work section.`,
-
-      source: "Selected Work",
-
-      section: "work",
-
-    };
-
-  }
-
-  if (
-
-    q.includes("contact") ||
-
-    q.includes("email") ||
-
-    q.includes("reach")
-
-  ) {
+      if (project.datasets?.length && project.id === "iot-ids") {
+        text += ` The project uses ${project.datasets.join(" and ")}.`;
+      }
+    }
 
     return {
-
-      text: "You can use the portfolio's Get in touch/contact area or the social links in the footer to reach Deepshik.",
-
-      source: "Contact",
-
+      text,
+      source: project.name,
+      link: project.url,
+      section: project.section,
     };
-
   }
 
+  // GENERAL PROJECT LIST
+  if (intent === "projects") {
+    return {
+      text:
+        `Deepshik currently has ${projects.length} featured projects:\n\n` +
+        projects
+          .map((project, index) => `${index + 1}. ${project.name}`)
+          .join("\n") +
+        `\n\nAsk me about any specific project and I can explain it.`,
+      source: "Selected Work",
+      section: "work",
+    };
+  }
+
+  // CONTACT
+  if (intent === "contact") {
+    return {
+      text:
+        "You can use the portfolio's Get in touch/contact area or the social links in the footer to reach Deepshik.",
+      source: "Contact",
+    };
+  }
+
+  // UNKNOWN / FALLBACK
   return {
-
-    text: `I can help you explore Deepshik's projects, skills, experience, research, certifications, education, and creative work. Try asking “Tell me about the IoT project” or “Show me his data engineering work.”`,
-
+    text:
+      "I can help you explore Deepshik's portfolio, including his " +
+      "about information, education, skills, experience, projects, " +
+      "research, certifications, achievements, and creative work. " +
+      "Ask me something specific about him or his work.",
     source: "Portfolio",
-
   };
-
 }
 
 export default function AIAssistant() {
