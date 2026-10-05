@@ -4044,8 +4044,367 @@ export default function Portfolio() {
   const [aboutTab, setAboutTab] = useState("story");
   const [activeNav, setActiveNav] = useState("#about");
   const [videoMuted, setVideoMuted] = useState(true);
+  const [selectedPolaroid, setSelectedPolaroid] = useState(null);
+  const polaroidZoomRef = useRef(null);
+  const polaroidCloseRef = useRef(null);
+  const polaroidBackdropRef = useRef(null);
+  const polaroidZoomAnimationRef = useRef(null);
+  const polaroidCloseAnimationRef = useRef(null);
 
   const videoRef = useRef(null);
+  const nameWaveRef = useRef(null);
+
+  /* ==========================================================
+     POLAROID QUICK-LOOK / MAC-STYLE ZOOM
+     ----------------------------------------------------------
+     The complete Polaroid card is animated as one physical object.
+     This includes its border, padding, image, caption, rotation,
+     and shadow — not just the photograph itself.
+     ========================================================== */
+
+  const openPolaroid = (photo, index, event) => {
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const rotation =
+      (index % 2 === 0 ? -1 : 1) * (3 + index);
+
+    setSelectedPolaroid({
+      photo,
+      index,
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      },
+      rotation,
+    });
+  };
+
+  const openGalleryImage = (item, index, event) => {
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const photo =
+      typeof item === "string"
+        ? { url: item, caption: "" }
+        : item;
+
+    setSelectedPolaroid({
+      photo,
+      index,
+      type: "gallery",
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      },
+      rotation: 0,
+    });
+  };
+
+  useEffect(() => {
+    if (!selectedPolaroid || !polaroidZoomRef.current) return;
+
+    const card = polaroidZoomRef.current;
+    const closeButton = polaroidCloseRef.current;
+    const { rect, rotation, type } = selectedPolaroid;
+    const isGalleryImage = type === "gallery";
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const desiredWidth = isGalleryImage
+      ? Math.min(560, viewportWidth - 40)
+      : Math.min(520, viewportWidth - 48);
+    const maxHeight = viewportHeight - 72;
+
+    let scale = desiredWidth / rect.width;
+    scale = Math.min(scale, maxHeight / rect.height);
+    scale = Math.max(scale, 1);
+
+    const finalWidth = rect.width * scale;
+    const finalHeight = rect.height * scale;
+    const finalLeft = (viewportWidth - finalWidth) / 2;
+    const finalTop = (viewportHeight - finalHeight) / 2;
+
+    const fromTransform =
+      `translate3d(0, 0, 0) rotate(${rotation}deg) scale(1)`;
+    const toTransform =
+      `translate3d(${finalLeft - rect.left}px, ${finalTop - rect.top}px, 0) rotate(0deg) scale(${scale})`;
+
+    // Keep the close button completely outside the Polaroid.
+    // It follows the same zoom path without being transformed/scaled with the card.
+    const closeSize = 28;
+    const closeGap = 8;
+    const sourceCloseLeft = rect.left + rect.width - closeSize;
+    const sourceCloseTop = Math.max(8, rect.top - closeSize - closeGap);
+    const finalCloseLeft = finalLeft + finalWidth - closeSize;
+    const finalCloseTop = Math.max(8, finalTop - closeSize - closeGap);
+
+    if (closeButton) {
+      closeButton.style.left = `${sourceCloseLeft}px`;
+      closeButton.style.top = `${sourceCloseTop}px`;
+    }
+
+    card.style.width = `${rect.width}px`;
+    card.style.height = `${rect.height}px`;
+    card.style.left = `${rect.left}px`;
+    card.style.top = `${rect.top}px`;
+    card.style.transform = fromTransform;
+
+    const animation = card.animate(
+      [
+        {
+          opacity: 0.96,
+          transform: fromTransform,
+          filter: "blur(0px)",
+        },
+        {
+          opacity: 1,
+          transform:
+            `translate3d(${(finalLeft - rect.left) * 0.72}px, ${(finalTop - rect.top) * 0.72}px, 0) rotate(${rotation * 0.22}deg) scale(${1 + (scale - 1) * 0.82})`,
+          filter: "blur(0px)",
+          offset: 0.72,
+        },
+        {
+          opacity: 1,
+          transform: toTransform,
+          filter: "blur(0px)",
+        },
+      ],
+      {
+        duration: 620,
+        easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+        fill: "forwards",
+      }
+    );
+
+    polaroidZoomAnimationRef.current = animation;
+
+    if (closeButton) {
+      polaroidCloseAnimationRef.current?.cancel();
+      const closeAnimation = closeButton.animate(
+        [
+          {
+            left: `${sourceCloseLeft}px`,
+            top: `${sourceCloseTop}px`,
+            opacity: 0,
+            transform: "scale(0.82)",
+          },
+          {
+            left: `${finalCloseLeft}px`,
+            top: `${finalCloseTop}px`,
+            opacity: 1,
+            transform: "scale(1)",
+          },
+        ],
+        {
+          duration: 620,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+          fill: "forwards",
+        }
+      );
+      polaroidCloseAnimationRef.current = closeAnimation;
+    }
+
+    return () => {
+      animation.cancel();
+      polaroidCloseAnimationRef.current?.cancel();
+      polaroidZoomAnimationRef.current = null;
+      polaroidCloseAnimationRef.current = null;
+    };
+  }, [selectedPolaroid]);
+
+  useEffect(() => {
+    if (!selectedPolaroid) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closePolaroid();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedPolaroid]);
+
+  const closePolaroid = () => {
+    if (!selectedPolaroid || !polaroidZoomRef.current) {
+      setSelectedPolaroid(null);
+      return;
+    }
+
+    const card = polaroidZoomRef.current;
+    const closeButton = polaroidCloseRef.current;
+    const backdrop = polaroidBackdropRef.current;
+    const { rect, rotation, type } = selectedPolaroid;
+    const isGalleryImage = type === "gallery";
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const desiredWidth = isGalleryImage
+      ? Math.min(560, viewportWidth - 40)
+      : Math.min(520, viewportWidth - 48);
+    const maxHeight = viewportHeight - 72;
+
+    let scale = desiredWidth / rect.width;
+    scale = Math.min(scale, maxHeight / rect.height);
+    scale = Math.max(scale, 1);
+
+    const finalWidth = rect.width * scale;
+    const finalHeight = rect.height * scale;
+    const finalLeft = (viewportWidth - finalWidth) / 2;
+    const finalTop = (viewportHeight - finalHeight) / 2;
+
+    const currentTransform =
+      `translate3d(${finalLeft - rect.left}px, ${finalTop - rect.top}px, 0) rotate(0deg) scale(${scale})`;
+    const originalTransform =
+      `translate3d(0, 0, 0) rotate(${rotation}deg) scale(1)`;
+
+    polaroidZoomAnimationRef.current?.cancel();
+    polaroidCloseAnimationRef.current?.cancel();
+
+    const animation = card.animate(
+      [
+        {
+          opacity: 1,
+          transform: currentTransform,
+          filter: "blur(0px)",
+        },
+        {
+          opacity: 1,
+          transform:
+            `translate3d(${(finalLeft - rect.left) * 0.58}px, ${(finalTop - rect.top) * 0.58}px, 0) rotate(${rotation * 0.38}deg) scale(${1 + (scale - 1) * 0.58})`,
+          offset: 0.48,
+          filter: "blur(0px)",
+        },
+        {
+          opacity: 0.995,
+          transform:
+            `translate3d(${(finalLeft - rect.left) * 0.12}px, ${(finalTop - rect.top) * 0.12}px, 0) rotate(${rotation * 0.82}deg) scale(${1 + (scale - 1) * 0.12})`,
+          offset: 0.82,
+          filter: "blur(0px)",
+        },
+        {
+          opacity: 0.98,
+          transform: originalTransform,
+          filter: "blur(0px)",
+        },
+      ],
+      {
+        duration: 700,
+        easing: "cubic-bezier(0.32, 0.72, 0, 1)",
+        fill: "forwards",
+      }
+    );
+
+    polaroidZoomAnimationRef.current = animation;    polaroidZoomAnimationRef.current = animation;
+
+    if (closeButton) {
+      const closeSize = 28;
+      const closeGap = 8;
+      const finalCloseLeft = finalLeft + finalWidth - closeSize;
+      const finalCloseTop = Math.max(8, finalTop - closeSize - closeGap);
+      const sourceCloseLeft = rect.left + rect.width - closeSize;
+      const sourceCloseTop = Math.max(8, rect.top - closeSize - closeGap);
+
+      const closeAnimation = closeButton.animate(
+        [
+          {
+            left: `${finalCloseLeft}px`,
+            top: `${finalCloseTop}px`,
+            opacity: 1,
+            transform: "scale(1)",
+          },
+          {
+            left: `${sourceCloseLeft}px`,
+            top: `${sourceCloseTop}px`,
+            opacity: 0,
+            transform: "scale(0.82)",
+          },
+        ],
+        {
+          duration: 500,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "forwards",
+        }
+      );
+      polaroidCloseAnimationRef.current = closeAnimation;
+    }
+
+    if (backdrop) {
+      backdrop.animate(
+        [
+          { opacity: 1 },
+          { opacity: 0 },
+        ],
+        {
+          duration: 620,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+          fill: "forwards",
+        }
+      );
+    }
+
+    animation.finished
+      .catch(() => {})
+      .finally(() => {
+        setSelectedPolaroid(null);
+      });
+  };
+
+  /* ==========================================================
+     NAME WAVE — AUTO AFTER 5 SECONDS + IMMEDIATE HOVER
+     Web Animations API is used so hover is never blocked by the
+     5-second automatic delay.
+     ========================================================== */
+
+  useEffect(() => {
+    const nameEl = nameWaveRef.current;
+    if (!nameEl) return;
+
+    const chars = Array.from(nameEl.children);
+    if (!chars.length) return;
+
+    const animateWave = () => {
+      chars.forEach((char, index) => {
+        char.getAnimations().forEach((animation) => animation.cancel());
+
+        char.animate(
+          [
+            { transform: "translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)" },
+            { transform: "translate3d(0, -10px, 0) rotate3d(0, 0, 1, 3deg)" },
+            { transform: "translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg)" },
+          ],
+          {
+            duration: 820,
+            delay: index * 35,
+            easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+            fill: "none",
+          }
+        );
+      });
+    };
+
+    const timer = window.setTimeout(animateWave, 5000);
+    nameEl.addEventListener("mouseenter", animateWave);
+
+    return () => {
+      window.clearTimeout(timer);
+      nameEl.removeEventListener("mouseenter", animateWave);
+      chars.forEach((char) =>
+        char.getAnimations().forEach((animation) => animation.cancel())
+      );
+    };
+  }, []);
 
   /* ==========================================================
      RESET NARRATIVE VIDEO SOUND WHEN LEAVING THE SECTION
@@ -4817,42 +5176,9 @@ export default function Portfolio() {
           display: inline-block;
           white-space: pre;
           will-change: transform;
-        }
-
-        /* Animate the name automatically when the hero loads.
-           Hovering the name still triggers the same wave again. */
-        .hero-main-text.is-auto > span {
-          animation: waveChar 0.6s ease-in-out;
-        }
-
-        .hero-main-text:hover > span {
-          animation: waveChar 0.6s ease-in-out;
-        }
-
-        .hero-main-text:hover > span:nth-child(1) { animation-delay: 0s; }
-        .hero-main-text:hover > span:nth-child(2) { animation-delay: 0.03s; }
-        .hero-main-text:hover > span:nth-child(3) { animation-delay: 0.06s; }
-        .hero-main-text:hover > span:nth-child(4) { animation-delay: 0.09s; }
-        .hero-main-text:hover > span:nth-child(5) { animation-delay: 0.12s; }
-        .hero-main-text:hover > span:nth-child(6) { animation-delay: 0.15s; }
-        .hero-main-text:hover > span:nth-child(7) { animation-delay: 0.18s; }
-        .hero-main-text:hover > span:nth-child(8) { animation-delay: 0.21s; }
-        .hero-main-text:hover > span:nth-child(9) { animation-delay: 0.24s; }
-        .hero-main-text:hover > span:nth-child(10) { animation-delay: 0.27s; }
-        .hero-main-text:hover > span:nth-child(11) { animation-delay: 0.30s; }
-        .hero-main-text:hover > span:nth-child(12) { animation-delay: 0.33s; }
-        .hero-main-text:hover > span:nth-child(13) { animation-delay: 0.36s; }
-        .hero-main-text:hover > span:nth-child(14) { animation-delay: 0.39s; }
-
-        @keyframes waveChar {
-          0%,
-          100% {
-            transform: translateY(0) rotate(0deg);
-          }
-
-          50% {
-            transform: translateY(-10px) rotate(3deg);
-          }
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-font-smoothing: antialiased;
         }
 
         /* ============================
@@ -9072,6 +9398,108 @@ export default function Portfolio() {
           align-items: center;
         }
 
+        /* ============================================================
+           POLAROID QUICK-LOOK / MAC-STYLE EXPANSION
+           ============================================================ */
+        .polaroid {
+          position: relative;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+
+        .polaroid:focus-visible {
+          outline: 2px solid #7dd3fc;
+          outline-offset: 5px;
+        }
+
+        .polaroid-is-zoomed {
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .polaroid-lightbox {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          pointer-events: auto;
+        }
+
+        .polaroid-lightbox-backdrop {
+          position: absolute;
+          inset: 0;
+          background: rgba(4, 13, 22, 0.68);
+          backdrop-filter: blur(16px) saturate(0.92);
+          -webkit-backdrop-filter: blur(16px) saturate(0.92);
+          animation: polaroidBackdropIn 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .polaroid-lightbox-card {
+          position: fixed !important;
+          z-index: 2;
+          margin: 0 !important;
+          box-sizing: border-box;
+          transform-origin: top left;
+          will-change: transform, opacity;
+          touch-action: none;
+          transition: none !important;
+        }
+
+        .polaroid-lightbox-close {
+          position: fixed;
+          left: 0;
+          top: 0;
+          z-index: 20;
+          width: 28px;
+          height: 28px;
+          border: 1px solid rgba(255,255,255,0.28);
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          background: rgba(8, 22, 34, 0.68);
+          color: #fff;
+          cursor: pointer;
+          box-shadow: 0 10px 28px rgba(0,0,0,0.24);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          transition: transform 160ms ease, background 160ms ease;
+        }
+
+        .polaroid-lightbox-close:hover {
+          transform: scale(1.08);
+          background: rgba(8, 22, 34, 0.86);
+        }
+
+        @keyframes polaroidBackdropIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .polaroid-lightbox-backdrop {
+            backdrop-filter: blur(11px) saturate(0.92);
+            -webkit-backdrop-filter: blur(11px) saturate(0.92);
+          }
+
+          .polaroid-lightbox-close {
+            width: 26px;
+            height: 26px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .polaroid-lightbox-backdrop {
+            animation: none;
+          }
+        }
+
         .captured-polaroid {
           width: min(340px, 82vw);
           padding: 14px 14px 42px;
@@ -10331,7 +10759,8 @@ export default function Portfolio() {
               I am{" "}
 
               <span
-                className="hero-main-text is-auto"
+                className="hero-main-text"
+                ref={nameWaveRef}
                 style={{
                   fontStyle: "italic",
                 }}
@@ -10792,7 +11221,23 @@ export default function Portfolio() {
             (photo, i) => (
               <div
                 key={i}
-                className="polaroid"
+                className={`polaroid ${
+                  selectedPolaroid?.index === i
+                    ? "polaroid-is-zoomed"
+                    : ""
+                }`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open ${photo.caption} photo`}
+                onClick={(event) =>
+                  openPolaroid(photo, i, event)
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openPolaroid(photo, i, event);
+                  }
+                }}
                 style={{
                   background:
                     dark
@@ -10817,6 +11262,9 @@ export default function Portfolio() {
                   boxShadow: dark
                     ? "0 10px 24px rgba(0,0,0,0.35)"
                     : "0 10px 24px rgba(0,0,0,0.1)",
+                  cursor: "zoom-in",
+                  transition: "transform 180ms ease, box-shadow 180ms ease",
+                  WebkitTapHighlightColor: "transparent",
                 }}
               >
                 <div
@@ -11768,7 +12216,22 @@ lift={isMobile ? 12 : 30}
                     return (
                       <div key={i} style={{ minWidth: 0 }}>
                         <div
-                          className="photo-tile specular-border-target"
+                          className={`photo-tile specular-border-target ${
+                            selectedPolaroid?.type === "gallery" &&
+                            selectedPolaroid?.index === i
+                              ? "polaroid-is-zoomed"
+                              : ""
+                          }`}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Open ${caption || "gallery image"}`}
+                          onClick={(event) => openGalleryImage(item, i, event)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              openGalleryImage(item, i, event);
+                            }
+                          }}
                           style={{
                             position: "relative",
                             aspectRatio: "9/16",
@@ -11984,6 +12447,96 @@ lift={isMobile ? 12 : 30}
           ====================================================== */}
 
       <DNAOfDeepshik isMobile={isMobile} />
+
+      {selectedPolaroid && (
+        <div
+          className="polaroid-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            selectedPolaroid.type === "gallery"
+              ? "Expanded gallery photograph"
+              : "Expanded Polaroid photograph"
+          }
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closePolaroid();
+            }
+          }}
+        >
+          <div
+            ref={polaroidBackdropRef}
+            className="polaroid-lightbox-backdrop"
+            onClick={closePolaroid}
+            aria-hidden="true"
+          />
+
+          <div
+            ref={polaroidZoomRef}
+            className="polaroid-lightbox-card"
+            style={{
+              background: selectedPolaroid.type === "gallery"
+                ? "transparent"
+                : dark
+                  ? "#102A43"
+                  : "#fff",
+              border: selectedPolaroid.type === "gallery"
+                ? "none"
+                : `1px solid ${theme.border}`,
+              borderRadius: selectedPolaroid.type === "gallery" ? 10 : 4,
+              padding: selectedPolaroid.type === "gallery" ? 0 : 8,
+              paddingBottom: selectedPolaroid.type === "gallery" ? 0 : 28,
+              boxShadow: selectedPolaroid.type === "gallery"
+                ? "0 30px 80px rgba(0,0,0,0.48)"
+                : dark
+                  ? "0 30px 80px rgba(0,0,0,0.55)"
+                  : "0 30px 80px rgba(0,0,0,0.28)",
+              overflow: selectedPolaroid.type === "gallery" ? "hidden" : "visible",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: selectedPolaroid.type === "gallery" ? "100%" : undefined,
+                aspectRatio: selectedPolaroid.type === "gallery" ? "9 / 16" : "1",
+                borderRadius: selectedPolaroid.type === "gallery" ? 10 : 2,
+                background: selectedPolaroid.photo.url
+                  ? `url(${selectedPolaroid.photo.url}) center/cover`
+                  : `linear-gradient(150deg, ${theme.pill}, ${theme.border})`,
+              }}
+            />
+
+            {selectedPolaroid.type !== "gallery" && (
+              <div
+                style={{
+                  textAlign: "center",
+                  marginTop: 12,
+                fontSize: 15,
+                lineHeight: 1.35,
+                color: theme.sub,
+                fontFamily: "'Fraunces', serif",
+                fontStyle: "italic",
+                whiteSpace: "normal",
+              }}
+            >
+                  {selectedPolaroid.photo.caption}
+                </div>
+              )}
+
+          </div>
+
+          <button
+            ref={polaroidCloseRef}
+            type="button"
+            className="polaroid-lightbox-close"
+            onClick={closePolaroid}
+            aria-label="Close expanded photograph"
+          >
+            <X size={14} strokeWidth={2.2} />
+          </button>
+        </div>
+      )}
 
       {/* ======================================================
           FOOTER
