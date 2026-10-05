@@ -808,7 +808,7 @@ export default function AIAssistant() {
 
 
 
-      text: "Hi — I'm B.L.U.E., Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
+      text: "Hi — I'm BLUE., Deepshik's portfolio assistant. Ask me about his work, skills, projects, research, or experience.",
 
 
 
@@ -3215,6 +3215,15 @@ useEffect(() => {
 
             border-radius: 999px !important;
 
+            /* Subtle floating separation from the mobile background. */
+            border: 1px solid rgba(255, 255, 255, 0.24) !important;
+            box-shadow:
+              0 5px 16px rgba(0, 0, 0, 0.16),
+              0 1px 4px rgba(0, 0, 0, 0.10),
+              inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+            backdrop-filter: blur(20px) saturate(145%);
+            -webkit-backdrop-filter: blur(20px) saturate(145%);
+
           }
 
 
@@ -3729,7 +3738,7 @@ useEffect(() => {
 
           <span className="dk-ai-launcher-label">
 
-            Talk to B.L.U.E.
+            Ask to B.L.U.E.
 
           </span>
 
