@@ -664,6 +664,8 @@ export default function AIAssistant() {
 
   const [open, setOpen] = useState(false);
 
+  const [avatarExpanded, setAvatarExpanded] = useState(false);
+
   const [input, setInput] = useState("");
 
   const [showTemplates, setShowTemplates] = useState(true);
@@ -1025,6 +1027,7 @@ export default function AIAssistant() {
     setSpeakingId(null);
     setSpeechPaused(false);
     setSpeechHintId(null);
+    setAvatarExpanded(false);
     setOpen(false);
   };
 
@@ -1448,7 +1451,13 @@ export default function AIAssistant() {
 
             <div className="dk-ai-title-wrap">
 
-              <div className="dk-ai-avatar">
+              <button
+                type="button"
+                className="dk-ai-avatar dk-ai-avatar-trigger"
+                onClick={() => setAvatarExpanded(true)}
+                aria-label="Enlarge B.L.U.E. avatar"
+                aria-expanded={avatarExpanded}
+              >
 
                 <BotAvatar
                   type="droid"
@@ -1463,7 +1472,7 @@ export default function AIAssistant() {
                   seed={0.42}
                 />
 
-              </div>
+              </button>
 
               <div>
 
@@ -1496,6 +1505,42 @@ export default function AIAssistant() {
             </button>
 
           </header>
+
+          {avatarExpanded && (
+            <div
+              className="dk-ai-avatar-expanded"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Expanded B.L.U.E. avatar"
+            >
+              <div className="dk-ai-avatar-expanded-card">
+                <button
+                  type="button"
+                  className="dk-ai-avatar-expanded-close"
+                  onClick={() => setAvatarExpanded(false)}
+                  aria-label="Close enlarged B.L.U.E. avatar"
+                >
+                  <X size={18} />
+                </button>
+
+                <div className="dk-ai-avatar-expanded-bot" aria-hidden="true">
+                  <BotAvatar
+                    type="droid"
+                    face="mouth"
+                    state="default"
+                    size={220}
+                    color="#0ac9df"
+                    shading="fabric"
+                    theme={isCrystalIce ? "light" : "auto"}
+                    interactive
+                    speed={0.9}
+                    seed={0.42}
+                  />
+                  
+                </div>
+              </div>
+            </div>
+          )}
 
           <div
 
