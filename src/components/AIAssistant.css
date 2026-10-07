@@ -1951,3 +1951,203 @@
     height: 34px;
   }
 }
+
+/* =========================================================
+   B.L.U.E. AVATAR EXPANDED VIEW
+   Clicking the header avatar opens a focused card inside the
+   assistant panel and temporarily hides the chat UI.
+   ========================================================= */
+
+.dk-ai-avatar-trigger {
+  all: unset;
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  border-radius: 13px;
+  transition: transform 0.22s ease, filter 0.22s ease;
+}
+
+.dk-ai-avatar-trigger:hover {
+  transform: scale(1.06);
+  filter: brightness(1.08);
+}
+
+.dk-ai-avatar-trigger:active {
+  transform: scale(0.96);
+}
+
+.dk-ai-avatar-trigger:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.78);
+  outline-offset: 3px;
+}
+
+.dk-ai-avatar-expanded {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(125, 211, 252, 0.12), transparent 42%),
+    rgba(5, 24, 37, 0.72);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  animation: dkAiAvatarExpandedIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dk-ai-avatar-expanded-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(125, 211, 252, 0.18), transparent 34%),
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.10), transparent 32%),
+    linear-gradient(145deg, rgba(24, 54, 70, 0.92), rgba(5, 27, 41, 0.97));
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  animation: dkAiAvatarCardIn 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dk-ai-avatar-expanded-card::before {
+  content: "";
+  position: absolute;
+  inset: 10%;
+  border: 1px solid rgba(125, 211, 252, 0.10);
+  border-radius: 28px;
+  pointer-events: none;
+}
+
+.dk-ai-avatar-expanded-bot {
+  position: relative;
+  z-index: 2;
+  width: min(58%, 300px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.20), transparent 28%),
+    radial-gradient(circle, rgba(125, 211, 252, 0.13), rgba(125, 211, 252, 0.025) 58%, transparent 72%);
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.12),
+    0 0 55px rgba(125, 211, 252, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.dk-ai-avatar-expanded-bot > * {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.dk-ai-avatar-expanded-close {
+  all: unset;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f4fbff !important;
+  cursor: pointer !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.dk-ai-avatar-expanded-close:hover {
+  transform: scale(1.06);
+  background: rgba(125, 211, 252, 0.14) !important;
+  border-color: rgba(125, 211, 252, 0.48) !important;
+}
+
+.dk-ai-avatar-expanded-close:active {
+  transform: scale(0.94);
+}
+
+.dk-ai-avatar-expanded-close:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.78);
+  outline-offset: 3px;
+}
+
+@keyframes dkAiAvatarExpandedIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dkAiAvatarCardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .dk-ai-avatar-trigger {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .dk-ai-avatar-expanded {
+    padding: 8px;
+  }
+
+  .dk-ai-avatar-expanded-card {
+    border-radius: 18px;
+  }
+
+  .dk-ai-avatar-expanded-bot {
+    width: min(64%, 270px);
+  }
+
+  .dk-ai-avatar-expanded-close {
+    top: 11px;
+    right: 11px;
+    width: 35px;
+    height: 35px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-ai-avatar-expanded,
+  .dk-ai-avatar-expanded-card {
+    animation: none;
+  }
+}
+
