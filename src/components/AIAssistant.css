@@ -774,9 +774,13 @@
 
         .dk-ai-chat-actions {
 
-          display: flex;
+          display: grid;
 
-          gap: 7px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+
+          gap: 6px;
+
+          width: 100%;
 
           margin-bottom: 8px;
 
@@ -784,7 +788,9 @@
 
         .dk-ai-chat-actions button {
 
-          flex: 1;
+          width: 100%;
+
+          min-width: 0;
 
         }
 
@@ -792,9 +798,21 @@
 
         .dk-ai-clear-chat,
 
-        .dk-ai-end-conversation {
+        .dk-ai-end-conversation,
+
+        .dk-ai-play-blue {
 
           all: unset;
+
+          box-sizing: border-box;
+
+          width: 100%;
+
+          min-width: 0;
+
+          min-height: 30px;
+
+          padding: 5px 7px;
 
           display: flex;
 
@@ -802,33 +820,46 @@
 
           justify-content: center;
 
-          min-height: 28px;
-
-          padding: 6px 10px;
+          text-align: center;
 
           border: 1px solid rgba(255, 255, 255, 0.12) !important;
 
-          border-radius: 10px !important;
+          border-radius: 9px !important;
 
-          background: rgba(255, 255, 255, 0.035) !important;
+          background:
+            linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.022)),
+            rgba(255, 255, 255, 0.025) !important;
 
           color: #e6f4fb !important;
 
           cursor: pointer !important;
 
-          font: 500 9px/1 Inter, system-ui, sans-serif !important;
+          font: 600 8.5px/1.15 Inter, system-ui, sans-serif !important;
 
-          letter-spacing: 0.04em;
+          letter-spacing: 0.015em;
 
-          opacity: 0.52;
+          white-space: nowrap;
+
+          overflow: hidden;
+
+          text-overflow: ellipsis;
+
+          opacity: 0.68;
+
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 4px 12px rgba(0, 0, 0, 0.06);
+
+          backdrop-filter: blur(14px) saturate(150%);
+
+          -webkit-backdrop-filter: blur(14px) saturate(150%);
 
           transition:
-
             opacity 0.2s ease,
-
+            transform 0.2s ease,
             background 0.2s ease,
-
-            border-color 0.2s ease;
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
 
         }
 
@@ -836,13 +867,61 @@
 
         .dk-ai-clear-chat:hover,
 
-        .dk-ai-end-conversation:hover {
+        .dk-ai-end-conversation:hover,
 
-          opacity: 0.9;
+        .dk-ai-play-blue:hover {
 
-          background: rgba(125, 211, 252, 0.08) !important;
+          opacity: 0.96;
 
-          border-color: rgba(125, 211, 252, 0.25) !important;
+          transform: translateY(-1px);
+
+          background:
+            linear-gradient(145deg, rgba(125, 211, 252, 0.12), rgba(255, 255, 255, 0.035)),
+            rgba(255, 255, 255, 0.03) !important;
+
+          border-color: rgba(125, 211, 252, 0.28) !important;
+
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.14),
+            0 6px 16px rgba(0, 0, 0, 0.08);
+
+        }
+
+        .dk-ai-play-blue {
+
+          color: #8fe7f5 !important;
+
+          border-color: rgba(125, 211, 252, 0.22) !important;
+
+          background:
+            linear-gradient(145deg, rgba(125, 211, 252, 0.075), rgba(255, 255, 255, 0.025)),
+            rgba(125, 211, 252, 0.035) !important;
+
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 4px 14px rgba(125, 211, 252, 0.05);
+
+        }
+
+        .dk-ai-play-blue:hover {
+
+          color: #dffbff !important;
+
+          background:
+            linear-gradient(145deg, rgba(125, 211, 252, 0.15), rgba(255, 255, 255, 0.035)),
+            rgba(125, 211, 252, 0.055) !important;
+
+          border-color: rgba(125, 211, 252, 0.42) !important;
+
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.16),
+            0 0 16px rgba(125, 211, 252, 0.10);
+
+        }
+
+        .dk-ai-chat-actions button:active {
+
+          transform: translateY(0) scale(0.98);
 
         }
 
@@ -850,7 +929,9 @@
 
         .dk-ai-clear-chat:disabled,
 
-        .dk-ai-end-conversation:disabled {
+        .dk-ai-end-conversation:disabled,
+
+        .dk-ai-play-blue:disabled {
 
           opacity: 0.2;
 
@@ -1509,7 +1590,11 @@
 
           .dk-ai-chat-actions {
 
-            gap: 5px;
+            display: grid;
+
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+
+            gap: 4px;
 
           }
 
@@ -1517,11 +1602,25 @@
 
             min-width: 0;
 
-            padding: 6px 5px;
+            width: 100%;
 
-            font-size: 8px !important;
+            min-height: 30px;
 
-            letter-spacing: 0.01em;
+            padding: 5px 3px;
+
+            font-size: 7.6px !important;
+
+            line-height: 1.15 !important;
+
+            letter-spacing: 0 !important;
+
+            text-align: center;
+
+            white-space: normal;
+
+            overflow: hidden;
+
+            text-overflow: clip;
 
           }
 
@@ -1643,10 +1742,14 @@
 
           }
 
+          .dk-ai-chat-actions {
+            gap: 3px;
+          }
+
           .dk-ai-chat-actions button {
-
-            font-size: 7.5px !important;
-
+            min-height: 28px;
+            padding: 4px 2px;
+            font-size: 7px !important;
           }
 
         }
@@ -1693,7 +1796,20 @@
 
         }
 
-        @media (prefers-reduced-motion: reduce) {
+        @media (min-width: 641px) and (max-width: 760px) {
+  .dk-ai-avatar-expanded-controls {
+    left: 5%;
+    right: 5%;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dk-ai-avatar-expanded-bot {
+    transform: translateY(-76px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
 
           .dk-ai-root *,
           .dk-ai-root *::before,
@@ -2038,8 +2154,10 @@
 }
 
 .dk-ai-avatar-expanded-bot {
-  position: relative;
+  position: absolute;
   z-index: 2;
+  top: 14%;
+  left: 50%;
   width: min(58%, 300px);
   aspect-ratio: 1;
   display: grid;
@@ -2052,6 +2170,8 @@
     0 0 0 1px rgba(125, 211, 252, 0.12),
     0 0 55px rgba(125, 211, 252, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateX(-50%);
+  transition: top 0.3s ease, filter 0.3s ease;
 }
 
 .dk-ai-avatar-expanded-bot > * {
@@ -2061,31 +2181,201 @@
   max-height: 100%;
 }
 
+/* ============================================================
+   EXPANDED B.L.U.E. STATE + HAT + GLASSES DROPDOWNS
+   Slim liquid-glass controls with custom glass menus.
+   ============================================================ */
+
+.dk-ai-avatar-expanded-controls {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  bottom: 8px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.dk-ai-avatar-control-group {
+  position: relative;
+  min-width: 0;
+  height: 27px;
+}
+
+.dk-ai-avatar-dropdown-trigger {
+  all: unset;
+  position: relative;
+  width: 100%;
+  height: 27px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid rgba(125, 211, 252, 0.30) !important;
+  border-radius: 9px !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.025)),
+    rgba(7, 31, 45, 0.54) !important;
+  color: #eaf9ff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 5px 14px rgba(0, 0, 0, 0.10);
+  backdrop-filter: blur(17px) saturate(165%);
+  -webkit-backdrop-filter: blur(17px) saturate(165%);
+  cursor: pointer !important;
+  overflow: hidden;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.dk-ai-avatar-dropdown-trigger:hover,
+.dk-ai-avatar-control-group.is-open .dk-ai-avatar-dropdown-trigger {
+  border-color: rgba(125, 211, 252, 0.52) !important;
+  background:
+    linear-gradient(145deg, rgba(125, 211, 252, 0.13), rgba(255, 255, 255, 0.035)),
+    rgba(7, 31, 45, 0.64) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 6px 18px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(125, 211, 252, 0.05);
+}
+
+.dk-ai-avatar-dropdown-trigger:active {
+  transform: scale(0.985);
+}
+
+.dk-ai-avatar-control-label {
+  min-width: 0;
+  color: #6ee3f5;
+  font: 700 8.5px/1 Inter, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.dk-ai-avatar-selected-value {
+  min-width: 0;
+  overflow: hidden;
+  color: #f0fbff;
+  font: 600 9px/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dk-ai-avatar-selected-value,
+.dk-ai-avatar-select-chevron {
+  display: none !important;
+}
+
+.dk-ai-avatar-select-chevron {
+  flex: 0 0 auto;
+  color: #8fe6f5;
+  font: 700 13px/1 Inter, system-ui, sans-serif;
+  transform: translateY(-1px);
+  pointer-events: none;
+}
+
+.dk-ai-avatar-dropdown-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 7px);
+  z-index: 80;
+  padding: 4px;
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  border-radius: 11px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035)),
+    rgba(5, 28, 43, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(0, 0, 0, 0.24),
+    0 0 22px rgba(125, 211, 252, 0.07);
+  backdrop-filter: blur(22px) saturate(175%);
+  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  overflow: hidden;
+  animation: dkAiAvatarDropdownIn 0.14s ease-out;
+}
+
+.dk-ai-avatar-dropdown-option {
+  all: unset;
+  width: 100%;
+  min-height: 27px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: 7px;
+  color: #eaf9ff;
+  font: 600 8.5px/1 Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dk-ai-avatar-dropdown-option:hover,
+.dk-ai-avatar-dropdown-option.active {
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.20), rgba(125, 211, 252, 0.07));
+  color: #ffffff;
+}
+
+.dk-ai-avatar-dropdown-check {
+  color: #75e5f7;
+  font-weight: 800;
+}
+
+@keyframes dkAiAvatarDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Keep the close control above the avatar canvas and all customization UI. */
 .dk-ai-avatar-expanded-close {
   all: unset;
   position: absolute;
   top: 14px;
   right: 14px;
-  z-index: 5;
+  z-index: 40;
   width: 38px;
   height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
   color: #f4fbff !important;
   cursor: pointer !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  pointer-events: auto !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 24px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(14px) saturate(155%);
+  -webkit-backdrop-filter: blur(14px) saturate(155%);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .dk-ai-avatar-expanded-close:hover {
   transform: scale(1.06);
-  background: rgba(125, 211, 252, 0.14) !important;
-  border-color: rgba(125, 211, 252, 0.48) !important;
+  background: rgba(125, 211, 252, 0.15) !important;
+  border-color: rgba(125, 211, 252, 0.5) !important;
 }
 
 .dk-ai-avatar-expanded-close:active {
@@ -2133,7 +2423,54 @@
   }
 
   .dk-ai-avatar-expanded-bot {
+    top: 10%;
     width: min(64%, 270px);
+  }
+
+  .dk-ai-avatar-expanded-controls {
+    left: 6%;
+    right: 6%;
+    bottom: 8px;
+    gap: 6px;
+  }
+
+  .dk-ai-avatar-control-group,
+  .dk-ai-avatar-dropdown-trigger {
+    height: 25px;
+  }
+
+  .dk-ai-avatar-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0 7px;
+    border-radius: 8px !important;
+  }
+
+  .dk-ai-avatar-control-label {
+    font-size: 8px;
+  }
+
+  .dk-ai-avatar-selected-value {
+    font-size: 7.5px;
+  }
+
+  .dk-ai-avatar-select-chevron {
+    font-size: 11px;
+  }
+
+  .dk-ai-avatar-dropdown-menu {
+    bottom: calc(100% + 5px);
+    padding: 3px;
+    border-radius: 9px;
+  }
+
+  .dk-ai-avatar-dropdown-option {
+    min-height: 24px;
+    padding: 0 6px;
+    font-size: 7.5px;
+    border-radius: 6px;
   }
 
   .dk-ai-avatar-expanded-close {
@@ -2151,3 +2488,131 @@
   }
 }
 
+/* ============================================================
+   B.L.U.E. AVATAR DISCOVERY HINT
+   One-time liquid-glass onboarding cue for the clickable avatar.
+   ============================================================ */
+
+.dk-ai-header-avatar-expanded .dk-ai-avatar-trigger-wrap {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dk-ai-avatar-trigger-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  z-index: 120;
+}
+
+.dk-ai-avatar-discovery-hint {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: -6px;
+  z-index: 200;
+  width: max-content;
+  max-width: 230px;
+  padding: 9px 12px 10px;
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035)),
+    rgba(5, 28, 43, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(0, 0, 0, 0.22),
+    0 0 24px rgba(125, 211, 252, 0.08);
+  backdrop-filter: blur(20px) saturate(175%);
+  -webkit-backdrop-filter: blur(20px) saturate(175%);
+  pointer-events: none;
+  animation: dkAiAvatarHintIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dk-ai-avatar-discovery-hint::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 21px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(125, 211, 252, 0.34);
+  border-left: 1px solid rgba(125, 211, 252, 0.34);
+  background: rgba(9, 34, 49, 0.88);
+  transform: rotate(45deg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dk-ai-avatar-discovery-hint-title,
+.dk-ai-avatar-discovery-hint-subtitle {
+  display: block;
+  white-space: nowrap;
+}
+
+.dk-ai-avatar-discovery-hint-title {
+  color: #eafaff;
+  font: 700 10px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: -0.005em;
+}
+
+.dk-ai-avatar-discovery-hint-subtitle {
+  margin-top: 4px;
+  color: rgba(207, 239, 249, 0.72);
+  font: 500 8.5px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+@keyframes dkAiAvatarHintIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dk-ai-avatar-trigger-wrap:hover .dk-ai-avatar-discovery-hint {
+  border-color: rgba(125, 211, 252, 0.48);
+}
+
+@media (max-width: 640px) {
+  .dk-ai-avatar-trigger-wrap {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dk-ai-avatar-discovery-hint {
+    top: calc(100% + 8px);
+    left: -4px;
+    max-width: 205px;
+    padding: 8px 10px 9px;
+    border-radius: 10px;
+  }
+
+  .dk-ai-avatar-discovery-hint::before {
+    left: 17px;
+  }
+
+  .dk-ai-avatar-discovery-hint-title {
+    font-size: 9px;
+  }
+
+  .dk-ai-avatar-discovery-hint-subtitle {
+    margin-top: 3px;
+    font-size: 7.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-ai-avatar-discovery-hint {
+    animation: none;
+  }
+}
