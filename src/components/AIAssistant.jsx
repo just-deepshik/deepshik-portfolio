@@ -660,11 +660,109 @@ ${project.capabilities.map((item) => `• ${item}`).join("\n")}`;
   };
 }
 
+function AvatarControlDropdown({
+  label,
+  value,
+  options,
+  open,
+  onToggle,
+  onChange,
+}) {
+  return (
+    <div className={`dk-ai-avatar-control-group ${open ? "is-open" : ""}`}>
+      <button
+        type="button"
+        className="dk-ai-avatar-dropdown-trigger"
+        onClick={onToggle}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${label} options`}
+      >
+        <span className="dk-ai-avatar-control-label">{label}</span>
+      </button>
+
+      {open && (
+        <div className="dk-ai-avatar-dropdown-menu" role="listbox" aria-label={`${label} options`}>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`dk-ai-avatar-dropdown-option ${
+                value === option.value ? "active" : ""
+              }`}
+              onClick={() => onChange(option.value)}
+              role="option"
+              aria-selected={value === option.value}
+            >
+              <span>{option.label}</span>
+              {value === option.value && <span className="dk-ai-avatar-dropdown-check">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AIAssistant() {
 
   const [open, setOpen] = useState(false);
 
   const [avatarExpanded, setAvatarExpanded] = useState(false);
+  const [showAvatarHint, setShowAvatarHint] = useState(false);
+  const avatarHintShownRef = useRef(false);
+  const avatarHintTimerRef = useRef(null);
+
+  // Show the avatar discovery hint once per assistant session.
+  useEffect(() => {
+    if (!open || avatarHintShownRef.current) return undefined;
+
+    avatarHintTimerRef.current = window.setTimeout(() => {
+      avatarHintShownRef.current = true;
+      setShowAvatarHint(true);
+
+      window.setTimeout(() => {
+        setShowAvatarHint(false);
+      }, 5000);
+    }, 650);
+
+    return () => {
+      window.clearTimeout(avatarHintTimerRef.current);
+      avatarHintTimerRef.current = null;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(avatarHintTimerRef.current);
+    };
+  }, []);
+
+  // B.L.U.E. expanded avatar customization
+  const [expandedBotState, setExpandedBotState] = useState("default");
+  const [expandedBotHat, setExpandedBotHat] = useState("none");
+  const [expandedBotGlasses, setExpandedBotGlasses] = useState("none");
+  const [expandedBotOpenMenu, setExpandedBotOpenMenu] = useState(null);
+
+  const EXPANDED_BOT_STATES = [
+    { value: "default", label: "Default" },
+    { value: "sleeping", label: "Sleeping" },
+    { value: "working", label: "Working" },
+  ];
+
+  const EXPANDED_BOT_GLASSES = [
+    { value: "none", label: "None" },
+    { value: "round", label: "Round" },
+    { value: "shades", label: "Shades" },
+    { value: "square", label: "Square" },
+  ];
+
+  const EXPANDED_BOT_HATS = [
+    { value: "party", label: "Party" },
+    { value: "beanie", label: "Beanie" },
+    { value: "beret", label: "Beret" },
+    { value: "crown", label: "Crown" },
+  ];
 
   const [input, setInput] = useState("");
 
@@ -1447,32 +1545,48 @@ export default function AIAssistant() {
 
         >
 
-          <header className="dk-ai-header">
+          <header className={`dk-ai-header ${avatarExpanded ? "dk-ai-header-avatar-expanded" : ""}`}>
 
             <div className="dk-ai-title-wrap">
 
-              <button
-                type="button"
-                className="dk-ai-avatar dk-ai-avatar-trigger"
-                onClick={() => setAvatarExpanded(true)}
-                aria-label="Enlarge B.L.U.E. avatar"
-                aria-expanded={avatarExpanded}
-              >
+              <div className="dk-ai-avatar-trigger-wrap">
+                <button
+                  type="button"
+                  className="dk-ai-avatar dk-ai-avatar-trigger"
+                  onClick={() => {
+                    setShowAvatarHint(false);
+                    setAvatarExpanded(true);
+                  }}
+                  aria-label="Enlarge B.L.U.E. avatar"
+                  aria-expanded={avatarExpanded}
+                >
 
-                <BotAvatar
-                  type="droid"
-                  face="mouth"
-                  state={typing ? "working" : "default"}
-                  size={42}
-                  color="#0ac9df"
-                  shading="fabric"
-                  theme={isCrystalIce ? "light" : "auto"}
-                  interactive
-                  speed={0.9}
-                  seed={0.42}
-                />
+                  <BotAvatar
+                    type="droid"
+                    face="mouth"
+                    state={typing ? "working" : "default"}
+                    size={42}
+                    color="#0ac9df"
+                    shading="fabric"
+                    theme={isCrystalIce ? "light" : "auto"}
+                    interactive
+                    speed={0.9}
+                    seed={0.42}
+                  />
 
-              </button>
+                </button>
+
+                {showAvatarHint && !avatarExpanded && (
+                  <div className="dk-ai-avatar-discovery-hint" role="status">
+                    <span className="dk-ai-avatar-discovery-hint-title">
+                      ✨ Click B.L.U.E. to expand
+                    </span>
+                    <span className="dk-ai-avatar-discovery-hint-subtitle">
+                      Interact • customize • play
+                    </span>
+                  </div>
+                )}
+              </div>
 
               <div>
 
@@ -1527,7 +1641,9 @@ export default function AIAssistant() {
                   <BotAvatar
                     type="droid"
                     face="mouth"
-                    state="default"
+                    state={expandedBotState}
+                    hat={expandedBotHat}
+                    glasses={expandedBotGlasses}
                     size={220}
                     color="#0ac9df"
                     shading="fabric"
@@ -1536,7 +1652,56 @@ export default function AIAssistant() {
                     speed={0.9}
                     seed={0.42}
                   />
-                  
+                </div>
+
+                <div className="dk-ai-avatar-expanded-controls" aria-label="B.L.U.E. avatar customization">
+                  <AvatarControlDropdown
+                    label="State"
+                    value={expandedBotState}
+                    options={EXPANDED_BOT_STATES}
+                    open={expandedBotOpenMenu === "state"}
+                    onToggle={() =>
+                      setExpandedBotOpenMenu((current) =>
+                        current === "state" ? null : "state"
+                      )
+                    }
+                    onChange={(value) => {
+                      setExpandedBotState(value);
+                      setExpandedBotOpenMenu(null);
+                    }}
+                  />
+
+                  <AvatarControlDropdown
+                    label="Hat"
+                    value={expandedBotHat}
+                    options={[{ value: "none", label: "None" }, ...EXPANDED_BOT_HATS]}
+                    open={expandedBotOpenMenu === "hat"}
+                    onToggle={() =>
+                      setExpandedBotOpenMenu((current) =>
+                        current === "hat" ? null : "hat"
+                      )
+                    }
+                    onChange={(value) => {
+                      setExpandedBotHat(value);
+                      setExpandedBotOpenMenu(null);
+                    }}
+                  />
+
+                  <AvatarControlDropdown
+                    label="Glasses"
+                    value={expandedBotGlasses}
+                    options={EXPANDED_BOT_GLASSES}
+                    open={expandedBotOpenMenu === "glasses"}
+                    onToggle={() =>
+                      setExpandedBotOpenMenu((current) =>
+                        current === "glasses" ? null : "glasses"
+                      )
+                    }
+                    onChange={(value) => {
+                      setExpandedBotGlasses(value);
+                      setExpandedBotOpenMenu(null);
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -1829,6 +1994,29 @@ if (message.type === "conversation-end") {
               >
 
                 End conversation
+
+              </button>
+
+              <button
+
+                type="button"
+
+                className="dk-ai-play-blue"
+
+                onClick={() => {
+                  setShowAvatarHint(false);
+                  setAvatarExpanded(true);
+                  avatarHintShownRef.current = true;
+                  window.clearTimeout(avatarHintTimerRef.current);
+                }}
+
+                disabled={typing}
+
+                aria-label="Play with B.L.U.E."
+
+              >
+
+                Play with B.L.U.E.
 
               </button>
 
