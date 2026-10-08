@@ -709,35 +709,6 @@ export default function AIAssistant() {
   const [open, setOpen] = useState(false);
 
   const [avatarExpanded, setAvatarExpanded] = useState(false);
-  const [showAvatarHint, setShowAvatarHint] = useState(false);
-  const avatarHintShownRef = useRef(false);
-  const avatarHintTimerRef = useRef(null);
-
-  // Show the avatar discovery hint once per assistant session.
-  useEffect(() => {
-    if (!open || avatarHintShownRef.current) return undefined;
-
-    avatarHintTimerRef.current = window.setTimeout(() => {
-      avatarHintShownRef.current = true;
-      setShowAvatarHint(true);
-
-      window.setTimeout(() => {
-        setShowAvatarHint(false);
-      }, 5000);
-    }, 650);
-
-    return () => {
-      window.clearTimeout(avatarHintTimerRef.current);
-      avatarHintTimerRef.current = null;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    return () => {
-      window.clearTimeout(avatarHintTimerRef.current);
-    };
-  }, []);
-
   // B.L.U.E. expanded avatar customization
   const [expandedBotState, setExpandedBotState] = useState("default");
   const [expandedBotHat, setExpandedBotHat] = useState("none");
@@ -1554,7 +1525,6 @@ export default function AIAssistant() {
                   type="button"
                   className="dk-ai-avatar dk-ai-avatar-trigger"
                   onClick={() => {
-                    setShowAvatarHint(false);
                     setAvatarExpanded(true);
                   }}
                   aria-label="Enlarge B.L.U.E. avatar"
@@ -1576,16 +1546,6 @@ export default function AIAssistant() {
 
                 </button>
 
-                {showAvatarHint && !avatarExpanded && (
-                  <div className="dk-ai-avatar-discovery-hint" role="status">
-                    <span className="dk-ai-avatar-discovery-hint-title">
-                      ✨ Click B.L.U.E. to expand
-                    </span>
-                    <span className="dk-ai-avatar-discovery-hint-subtitle">
-                      Interact • customize • play
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div>
@@ -2004,10 +1964,7 @@ if (message.type === "conversation-end") {
                 className="dk-ai-play-blue"
 
                 onClick={() => {
-                  setShowAvatarHint(false);
                   setAvatarExpanded(true);
-                  avatarHintShownRef.current = true;
-                  window.clearTimeout(avatarHintTimerRef.current);
                 }}
 
                 disabled={typing}
